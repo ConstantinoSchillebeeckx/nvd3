@@ -117,7 +117,9 @@ nv.models.distroPlot = function() {
     Scott, D.W. (1992) Multivariate Density Estimation: Theory, Practice, and
         Visualization.
      */
-    function calcBandwidth(x, type='scott') {
+    function calcBandwidth(x, type) {
+
+        if (typeof type === 'undefined') type = 'scott';
 
         // TODO: consider using https://github.com/jasondavies/science.js
         var A = select_sigma(x);
