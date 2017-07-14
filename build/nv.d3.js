@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-07-13 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-07-14 */
 (function(){
 
 // set up main nv object
@@ -4795,7 +4795,9 @@ nv.models.distroPlot = function() {
     Scott, D.W. (1992) Multivariate Density Estimation: Theory, Practice, and
         Visualization.
      */
-    function calcBandwidth(x, type='scott') {
+    function calcBandwidth(x, type) {
+
+        if (typeof type === 'undefined') type = 'scott';
 
         // TODO: consider using https://github.com/jasondavies/science.js
         var A = select_sigma(x);
@@ -4882,7 +4884,14 @@ nv.models.distroPlot = function() {
                 e.isOutlierStdDev = (e.datum < wl.stddev || e.datum > wu.stddev) // add isOulier meta for proper class assignment
             })
 
-            if (isNaN(bandwidth)) bandwidth = calcBandwidth(v, bandwidth);
+            // calculate bandwidth if no number is provided
+            if(isNaN(parseFloat(bandwidth))) { // if not is float
+                if (['scott','silverman'].indexOf(bandwidth) != -1) {
+                    bandwidth = calcBandwidth(v, bandwidth);
+                } else {
+                    bandwidth = calcBandwidth(v); // calculate with default 'scott'
+                }
+            }
             var kde = kernelDensityEstimator(eKernel(bandwidth), yScale.ticks(resolution));
             var kdeDat = kde(v);
 
