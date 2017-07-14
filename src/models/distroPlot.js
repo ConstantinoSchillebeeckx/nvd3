@@ -204,7 +204,14 @@ nv.models.distroPlot = function() {
                 e.isOutlierStdDev = (e.datum < wl.stddev || e.datum > wu.stddev) // add isOulier meta for proper class assignment
             })
 
-            if (isNaN(bandwidth)) bandwidth = calcBandwidth(v, bandwidth);
+            // calculate bandwidth if no number is provided
+            if(isNaN(parseFloat(bandwidth))) { // if not is float
+                if (['scott','silverman'].indexOf(bandwidth) != -1) {
+                    bandwidth = calcBandwidth(v, bandwidth);
+                } else {
+                    bandwidth = calcBandwidth(v); // calculate with default 'scott'
+                }
+            }
             var kde = kernelDensityEstimator(eKernel(bandwidth), yScale.ticks(resolution));
             var kdeDat = kde(v);
 
