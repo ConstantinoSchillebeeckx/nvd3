@@ -62,13 +62,6 @@
             opacity: 1;
           }
 
-          .nv-x .nv-axis g text.nv-axislabel {
-            font-size: 2vmin;
-          }
-          .nv-y .nv-axis g text.nv-axislabel {
-            font-size: 2hmin;
-          }
-
     </style>
 </head>
 
@@ -118,8 +111,8 @@
         x: function(d) { return d.study },
         value: function(d) { return d.weight }, 
         colorGroup: false,
-        //colorGroup: function(d) { return d.donor; },
         title: false,
+        bandwidth: 'scott',
         maxBoxWidth: null,
         xLabel: false,
         yLabel: false,
