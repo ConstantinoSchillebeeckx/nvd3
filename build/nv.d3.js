@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-07-24 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-07-31 */
 (function(){
 
 // set up main nv object
@@ -4979,11 +4979,6 @@ nv.models.distroPlot = function() {
             });
 
         }
-
-        // add series index for object constancy
-        formatted.forEach(function(d,i) {
-            d.series = i;
-        });
         return formatted;
     }
 
@@ -5478,7 +5473,7 @@ nv.models.distroPlot = function() {
         yDomain: {get: function(){return yDomain;}, set: function(_){yDomain=_;}},
         xRange:  {get: function(){return xRange;}, set: function(_){xRange=_;}},
         yRange:  {get: function(){return yRange;}, set: function(_){yRange=_;}},
-        recalcData: {get: function() { reformatDat = prepData(data); } },
+        recalcData: {get: function() { reformatDat = prepData(d3.select('svg').data()[0]); } }, // TODO is there a better way to grab attached data?
         itemColor:    {get: function(){return getColor;}, set: function(_){getColor=_;}},
         id:          {get: function(){return id;}, set: function(_){id=_;}},
 
@@ -5592,9 +5587,9 @@ nv.models.distroPlotChart = function() {
 
             chart.update = function() {
                 var opts = distroplot.options()
-                if (colorGroup0.toString() !== opts.colorGroup().toString() || // recalc data when any of the axis accessors are changed
-                    x0.toString() !== opts.x().toString() ||
-                    value0.toString() !== opts.value().toString()
+                if (colorGroup0 !== opts.colorGroup() || // recalc data when any of the axis accessors are changed
+                    x0 !== opts.x() ||
+                    value0 !== opts.value()
                 ) {
                     distroplot.recalcData();
                 }
