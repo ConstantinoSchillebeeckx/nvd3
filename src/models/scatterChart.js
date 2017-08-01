@@ -91,7 +91,7 @@ nv.models.scatterChart = function() {
 
             // group data if it is passed
             // as an object
-            if (!('key' in data[0] && 'values' in data[0])) {
+            if (data.length && !('key' in data[0] && 'values' in data[0])) {
                 data = d3.nest()
                     .key(getGroup)
                     .entries(data)
