@@ -91,10 +91,14 @@ nv.models.scatterChart = function() {
 
             // group data if it is passed
             // as an object
-            if (typeof data === 'object') {
+            if (!('key' in data[0] && 'values' in data[0])) {
                 data = d3.nest()
                     .key(getGroup)
                     .entries(data)
+
+                // bind new data format
+                d3.select(this)
+                    .datum(data)
             }
 
             container = d3.select(this);
