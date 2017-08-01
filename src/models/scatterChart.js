@@ -35,6 +35,7 @@ nv.models.scatterChart = function() {
         , noData       = null
         , duration = 250
         , showLabels    = false
+        , getGroup     = function(d) { return d.Group } // accessor to get point group color
         ;
 
     scatter.xScale(x).yScale(y);
@@ -87,6 +88,14 @@ nv.models.scatterChart = function() {
 
         selection.each(function(data) {
             var that = this;
+
+            // group data if it is passed
+            // as an object
+            if (typeof data === 'object') {
+                data = d3.nest()
+                    .key(getGroup)
+                    .entries(data)
+            }
 
             container = d3.select(this);
             nv.utils.initSVG(container);
@@ -364,6 +373,7 @@ nv.models.scatterChart = function() {
         noData:     {get: function(){return noData;}, set: function(_){noData=_;}},
         duration:   {get: function(){return duration;}, set: function(_){duration=_;}},
         showLabels: {get: function(){return showLabels;}, set: function(_){showLabels=_;}},
+        pointGroup: {get: function(){return getGroup;}, set: function(_){getGroup = d3.functor(_);}},
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){
