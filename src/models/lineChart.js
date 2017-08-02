@@ -31,6 +31,7 @@ nv.models.lineChart = function() {
         , state = nv.utils.state()
         , defaultState = null
         , noData = null
+        , getGroup = function(d) { return d.group }
         , dispatch = d3.dispatch('stateChange', 'changeState', 'renderEnd')
         , duration = 250
         ;
@@ -88,6 +89,19 @@ nv.models.lineChart = function() {
             nv.utils.initSVG(container);
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin) - (focusEnable ? focus.height() : 0);
+
+            // group data if it is passed
+            // as an object
+            if (data.length && !('key' in data[0] && 'values' in data[0])) {
+                data = d3.nest()
+                    .key(getGroup)
+                    .entries(data)
+
+                // bind new data format
+                d3.select(this)
+                    .datum(data)
+            }
+
             chart.update = function() {
                 if( duration === 0 ) {
                     container.call( chart );
@@ -472,6 +486,7 @@ nv.models.lineChart = function() {
         showYAxis:    {get: function(){return showYAxis;}, set: function(_){showYAxis=_;}},
         defaultState:    {get: function(){return defaultState;}, set: function(_){defaultState=_;}},
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
+        lineGroup:    {get: function(){return getGroup;}, set: function(_){getGroup=_;}},
         // Focus options, mostly passed onto focus model.
         focusEnable:    {get: function(){return focusEnable;}, set: function(_){focusEnable=_;}},
         focusHeight:     {get: function(){return focus.height();}, set: function(_){focus.height(_);}},
