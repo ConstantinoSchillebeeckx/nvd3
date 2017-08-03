@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-02 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-03 */
 (function(){
 
 // set up main nv object
@@ -4929,6 +4929,8 @@ nv.models.distroPlot = function() {
             return reformat;
         }
 
+        console.log(colorGroup)
+
         // TODO not DRY
         // couldn't find a conditional way of doing the key() grouping
         var formatted;
@@ -4943,6 +4945,7 @@ nv.models.distroPlot = function() {
                 })
                 .entries(dat);
         } else {
+            allColorGroups = d3.set() // reset
             var tmp = d3.nest()
                 .key(function(d) { return getX(d); })
                 .key(function(d) { return colorGroup(d); })
