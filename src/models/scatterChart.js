@@ -96,6 +96,9 @@ nv.models.scatterChart = function() {
                     .key(getGroup)
                     .entries(data)
 
+                // if no grouping available, rename to 'Series'
+                if (data[0].key == 'null') data[0].key = 'Series';
+
                 // bind new data format
                 d3.select(this)
                     .datum(data)
