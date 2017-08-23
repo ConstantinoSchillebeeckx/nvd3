@@ -183,7 +183,7 @@ nv.models.lineChart = function() {
                      g.select('.nv-legendWrap')
                          .attr('transform', 'translate(0,' + (availableHeight + xAxis.height())  +')');
                 } else if (legendPosition === 'top') {
-                    if (!marginTop && legend.height() !== margin.top) {
+                    if (!marginTop && legend.height() > margin.top) {
                         margin.top = legend.height();
                         availableHeight = nv.utils.availableHeight(height, container, margin) - (focusEnable ? focus.height() : 0);
                     }
