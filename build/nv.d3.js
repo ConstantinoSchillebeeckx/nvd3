@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-22 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-23 */
 (function(){
 
 // set up main nv object
