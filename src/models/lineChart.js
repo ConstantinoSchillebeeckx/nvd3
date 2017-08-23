@@ -90,7 +90,6 @@ nv.models.lineChart = function() {
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin) - (focusEnable ? focus.height() : 0);
 
-            console.log(data)
             // group data if it is passed
             // as an object
             if (data.length && !('key' in data[0] && 'values' in data[0])) {
