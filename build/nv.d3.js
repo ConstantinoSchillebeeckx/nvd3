@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-03 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-22 */
 (function(){
 
 // set up main nv object
@@ -4929,8 +4929,6 @@ nv.models.distroPlot = function() {
             return reformat;
         }
 
-        console.log(colorGroup)
-
         // TODO not DRY
         // couldn't find a conditional way of doing the key() grouping
         var formatted;
@@ -5232,30 +5230,32 @@ nv.models.distroPlot = function() {
 
                 var interp = plotType=='box' ? 'linear' : 'cardinal';
 
-                ['left','right'].forEach(function(side) {
+                if (plotType == 'box' || plotType == 'violin') {
+                    ['left','right'].forEach(function(side) {
 
-                    // line
-                    distroplots.selectAll('.nv-distribution-line.nv-distribution-' + side)
-                      .watchTransition(renderWatch, 'nv-distribution-line: distroplots')
-                        .attr("d", d3.svg.line()
-                                .x(function(e) { return plotType=='box' ? e.y : yScale(e.x); })
-                                .y(function(e) { return plotType=='box' ? e.x : tmpScale(e.y) })
-                                .interpolate(interp)
-                        )
-                        .attr("transform", "rotate(90,0,0)   translate(0," + (side == 'left' ? -areaWidth() : 0) + ")" + (side == 'left' ? '' : ' scale(1,-1)')); // rotate violin
+                        // line
+                        distroplots.selectAll('.nv-distribution-line.nv-distribution-' + side)
+                          .watchTransition(renderWatch, 'nv-distribution-line: distroplots')
+                            .attr("d", d3.svg.line()
+                                    .x(function(e) { return plotType=='box' ? e.y : yScale(e.x); })
+                                    .y(function(e) { return plotType=='box' ? e.x : tmpScale(e.y) })
+                                    .interpolate(interp)
+                            )
+                            .attr("transform", "rotate(90,0,0)   translate(0," + (side == 'left' ? -areaWidth() : 0) + ")" + (side == 'left' ? '' : ' scale(1,-1)')); // rotate violin
 
-                    // area
-                    distroplots.selectAll('.nv-distribution-area.nv-distribution-' + side)
-                      .watchTransition(renderWatch, 'nv-distribution-line: distroplots')
-                        .attr("d", d3.svg.area()
-                                .x(function(e) { return plotType=='box' ? e.y : yScale(e.x); })
-                                .y(function(e) { return plotType=='box' ? e.x : tmpScale(e.y) })
-                                .y0(areaWidth()/2)
-                                .interpolate(interp)
-                        )
-                        .attr("transform", "rotate(90,0,0)   translate(0," + (side == 'left' ? -areaWidth() : 0) + ")" + (side == 'left' ? '' : ' scale(1,-1)')); // rotate violin
+                        // area
+                        distroplots.selectAll('.nv-distribution-area.nv-distribution-' + side)
+                          .watchTransition(renderWatch, 'nv-distribution-line: distroplots')
+                            .attr("d", d3.svg.area()
+                                    .x(function(e) { return plotType=='box' ? e.y : yScale(e.x); })
+                                    .y(function(e) { return plotType=='box' ? e.x : tmpScale(e.y) })
+                                    .y0(areaWidth()/2)
+                                    .interpolate(interp)
+                            )
+                            .attr("transform", "rotate(90,0,0)   translate(0," + (side == 'left' ? -areaWidth() : 0) + ")" + (side == 'left' ? '' : ' scale(1,-1)')); // rotate violin
 
-                })
+                    })
+                }
 
             })
 
