@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <link href="../build/nv.d3.css" rel="stylesheet" type="text/css">
-<link href="teststyle.css" rel="stylesheet" type='text/css'>
 <script src="../bower_components/d3/d3.js"></script>
 <script src="../build/nv.d3.js"></script>
 
-<link href="teststyle.css" rel="stylesheet" type='text/css'>
 <script src="https://cdn.rawgit.com/Kcnarf/d3-beeswarm/fbda9b54/build/d3-beeswarm.min.js"></script>
 
 
@@ -25,6 +23,7 @@
             padding: 0px;
             height: 100%;
             width: 100%;
+            font-family: 'system-ui';
           }
 
           circle.nv-distroplot-observation {
@@ -44,7 +43,7 @@
             margin-left: 10px;
             font-size: 80%;
           }
-    
+
           button {
             margin-bottom: 5px;
           }
@@ -66,9 +65,8 @@
     <div class="buttons">
         Plot types
         <button onclick="updatePlot(defaultBox);">Box</button>
-        <button onclick="updatePlot({plotType: 'violin', margin: {top: 10}});">Violin</button>
-        <br>
-        X-axis
+        <button onclick="updatePlot({plotType: 'violin'});">Violin</button>
+         | X-axis
         <button onclick="updatePlot({x: function(d) { return d.Isolator; }});">Isolator</button>
         <button onclick="updatePlot({x: function(d) { return d.Protocol; }});">Protocol</button>
         <button onclick="updatePlot({x: function(d) { return d.Subject; }});">Subject</button>
@@ -76,10 +74,9 @@
         <br>
         Decorations
         <button onclick="updatePlot({notchBox: true, plotType: 'box'});">Notched box</button>
-        <button onclick="updatePlot({showMiddle: 'mean'});">Mean line</button>
-        <button onclick="updatePlot({showMiddle: 'median'});">Median line</button>
-        <button onclick="updatePlot({showMiddle: false});">Remove mean/median line</button>
-        <button onclick="updatePlot(toggleTitle ? {title: 'Distro chart!', xLabel: 'Study', yLabel: 'Weight'} : {title: null, xLabel: null, yLabel: null}); toggleTitle = !toggleTitle;">Toggle titles</button>
+        <button onclick="updatePlot({centralTendency: 'mean'});">Mean line</button>
+        <button onclick="updatePlot({centralTendency: 'median'});">Median line</button>
+        <button onclick="updatePlot({centralTendency: false});">Remove mean/median line</button>
         <br>
         Observation positions
         <button onclick="updatePlot({observationType: 'random'});">Random</button>
@@ -94,8 +91,7 @@
         <button onclick="updatePlot({plotType: 'box', whiskerDef: 'stddev', hideWhiskers: false});">1 * std. dev.</button>
         <button onclick="updatePlot({plotType: 'box', whiskerDef: 'minmax', hideWhiskers: false});">min/max</button>
         <button onclick="updatePlot({plotType: 'box', hideWhiskers: true});">Hidden</button>
-        <br>
-        Grouping
+         | Grouping
         <button onclick="updatePlot({colorGroup: function(d) { return d.Isolator; }, squash: false});">No squash</button>
         <button onclick="updatePlot({colorGroup: function(d) { return d.Isolator; }, squash: true});">Squashed</button>
     </div>
@@ -110,20 +106,18 @@
 
     var chart = nv.models.distroPlotChart();
     var showOnlyOutliers = true;
-    var toggleTitle = true;
     var defaultBox = {
         x: function(d) { return d.Study },
-        value: function(d) { return d.Weight }, 
+        y: function(d) { return d.Weight },
         colorGroup: false,
-        title: false,
         bandwidth: 'scott',
         maxBoxWidth: null,
         xLabel: false,
         yLabel: false,
-        showMiddle: 'median',
+        centralTendency: 'median',
         squash: false,
         plotType: 'box',
-        observationType: 'centered',
+        observationType: 'random',
         jitter: 0.7,
         hideWhiskers: false,
         notchBox: false,
@@ -147,7 +141,7 @@
     // update chart with new settings
     function updatePlot(update) {
 
-        setChart(update);        
+        setChart(update);
         chart.update();
     }
 

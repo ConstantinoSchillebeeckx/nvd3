@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-23 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-24 */
 (function(){
 
 // set up main nv object
@@ -4698,13 +4698,13 @@ nv.models.distroPlot = function() {
         yScale = d3.scale.linear(),
         colorGroupSizeScale = d3.scale.ordinal(), // help position boxes if grouping
         getX  = function(d) { return d.label }, // Default data model selectors.
-        getValue  = function(d) { return d.value },
+        getY  = function(d) { return d.value },
         getColor = function(d) { return d.color },
         getQ1 = function(d) { return d.values.q1 },
         getQ2 = function(d) { return d.values.q2 },
         getQ3 = function(d) { return d.values.q3 },
-        getNl = function(d) { return (showMiddle == 'mean' ? getMean(d) : getQ2(d)) - d.values.notch },
-        getNu = function(d) { return (showMiddle == 'mean' ? getMean(d) : getQ2(d)) + d.values.notch },
+        getNl = function(d) { return (centralTendency == 'mean' ? getMean(d) : getQ2(d)) - d.values.notch },
+        getNu = function(d) { return (centralTendency == 'mean' ? getMean(d) : getQ2(d)) + d.values.notch },
         getMean = function(d) { return d.values.mean },
         getWl = function(d) { return d.values.wl[whiskerDef] },
         getWh = function(d) { return d.values.wu[whiskerDef] },
@@ -4719,13 +4719,13 @@ nv.models.distroPlot = function() {
         hideWhiskers = false,
         notchBox = false, // bool whether to notch box
         colorGroup = false, // if specified, each x-category will be split into groups, each colored
-        showMiddle = false,
+        centralTendency = false,
         showOnlyOutliers = true, // show only outliers in box plot
         jitter = 0.7, // faction of that jitter should take up in 'random' observationType, must be in range [0,1]; see jitterX(), default 0.7
         squash = true, // whether to remove the x-axis positions for empty data groups, default is true
         bandwidth = 'scott', // bandwidth for kde calculation, can be float or str, if str, must be one of scott or silverman
         resolution = 50,
-        observationRadius = 3,
+        pointSize = 3,
         color = nv.utils.defaultColor(),
         colorGroupColorScale = nv.utils.getColor(d3.scale.category10().range()), // used to color boxes if .colorGroup() specified
         container = null,
@@ -4872,21 +4872,37 @@ nv.models.distroPlot = function() {
             var wu = {iqr: q3 + 1.5 * iqr, minmax: d3.max(v), stddev: d3.mean(v) + d3.deviation(v)};
             var median = d3.median(v);
             var mean = d3.mean(v);
+            var observations = [];
 
-            var observations = d3.beeswarm()
-                .data(v)
-                .radius(observationRadius+1)
-                .orientation('vertical')
-                .side('symmetric')
-                .distributeOn(function(e) { return yScale(e); })
-                .arrange()
+            // d3-beeswarm library must be externally loaded if being used
+            // https://github.com/Kcnarf/d3-beeswarm
+            if (typeof d3.beeswarm !== 'undefined') {
+                observations = d3.beeswarm()
+                    .data(v)
+                    .radius(pointSize+1)
+                    .orientation('vertical')
+                    .side('symmetric')
+                    .distributeOn(function(e) { return yScale(e); })
+                    .arrange()
 
-            // add group info for tooltip
-            observations.map(function(e,i) { 
-                e.key = xGroup; 
-                e.isOutlier = (e.datum < wl.iqr || e.datum > wu.iqr) // add isOulier meta for proper class assignment
-                e.isOutlierStdDev = (e.datum < wl.stddev || e.datum > wu.stddev) // add isOulier meta for proper class assignment
-            })
+                // add group info for tooltip
+                observations.map(function(e,i) { 
+                    e.key = xGroup; 
+                    e.isOutlier = (e.datum < wl.iqr || e.datum > wu.iqr) // add isOulier meta for proper class assignment
+                    e.isOutlierStdDev = (e.datum < wl.stddev || e.datum > wu.stddev) // add isOulier meta for proper class assignment
+                })
+            } else {
+                v.forEach(function(e,i) {
+                    observations.push({
+                        id: i,
+                        datum: e,
+                        key: xGroup,
+                        isOutlier: (e < wl.iqr || e > wu.iqr), // add isOulier meta for proper class assignment
+                        isOutlierStdDev: (e < wl.stddev || e > wu.stddev), // add isOulier meta for proper class assignment
+                    })
+                })
+            }
+
 
             // calculate bandwidth if no number is provided
             if(isNaN(parseFloat(bandwidth))) { // if not is float
@@ -4937,7 +4953,7 @@ nv.models.distroPlot = function() {
                 .key(function(d) { return getX(d); })
                 .rollup(function(v) {
                     var sortDat = v.map(function(d) {
-                        return getValue(d);
+                        return getY(d);
                     }).sort(d3.ascending);
                     return calcStats(sortDat);
                 })
@@ -4951,7 +4967,7 @@ nv.models.distroPlot = function() {
                     var xGroup = getX(v[0])
                     var sortDat = v.map(function(d) {
                         allColorGroups.add(colorGroup(d)); // list of all colorGroups; used to set x-axis
-                        return getValue(d);
+                        return getY(d);
                     }).sort(d3.ascending);
                     return calcStats(sortDat, xGroup);
                 })
@@ -5016,7 +5032,7 @@ nv.models.distroPlot = function() {
     function makeNotchBox(boxLeft, notchLeft, boxCenter, dat) {
 
         var boxPoints;
-        var y = showMiddle == 'mean' ? getMean(dat) : getQ2(dat); // if showMiddle is not specified, we still want to notch boxes on 'median'
+        var y = centralTendency == 'mean' ? getMean(dat) : getQ2(dat); // if centralTendency is not specified, we still want to notch boxes on 'median'
         if (notchBox) {
             boxPoints = [
                     {x:boxCenter, y:yScale(getQ1(dat))},
@@ -5076,7 +5092,7 @@ nv.models.distroPlot = function() {
             nv.utils.initSVG(container);
 
             // Setup y-scale for use in beeswarm layout
-            yScale.domain(yDomain || d3.extent(data.map(function(d) { return getValue(d)})))
+            yScale.domain(yDomain || d3.extent(data.map(function(d) { return getY(d)})))
                   .range(yRange || [availableHeight, 0]);
 
             if (typeof reformatDat === 'undefined') reformatDat = prepData(data); // this prevents us from reformatted data all the time
@@ -5314,10 +5330,10 @@ nv.models.distroPlot = function() {
             distroplots.selectAll('line.nv-distroplot-middle')
                 .watchTransition(renderWatch, 'nv-distroplot-x-group: distroplots line')
                 .attr('x1', notchBox ? tickLeft : plotType == 'box' ? areaLeft : tickLeft())
-                .attr('y1', function(d,i,j) { return showMiddle == 'mean' ? yScale(getMean(d)) : yScale(getQ2(d)); })
+                .attr('y1', function(d,i,j) { return centralTendency == 'mean' ? yScale(getMean(d)) : yScale(getQ2(d)); })
                 .attr('x2', notchBox ? tickRight : plotType == 'box' ? areaRight : tickRight())
-                .attr('y2', function(d,i) { return showMiddle == 'mean' ? yScale(getMean(d)) : yScale(getQ2(d)); })
-                .style('opacity', showMiddle ? '1' : '0');
+                .attr('y2', function(d,i) { return centralTendency == 'mean' ? yScale(getMean(d)) : yScale(getQ2(d)); })
+                .style('opacity', centralTendency ? '1' : '0');
 
 
             // tooltip
@@ -5327,8 +5343,8 @@ nv.models.distroPlot = function() {
                     var fillColor = d3.select(this.parentNode).style('fill'); // color set by parent g fill
                     d3.select(this).classed('hover', true);
                     dispatch.elementMouseover({
-                        value: showMiddle == 'mean' ? 'Mean' : 'Median',
-                        series: { key: showMiddle == 'mean' ? getMean(d).toFixed(2) : getQ2(d).toFixed(2), color: fillColor },
+                        value: centralTendency == 'mean' ? 'Mean' : 'Median',
+                        series: { key: centralTendency == 'mean' ? getMean(d).toFixed(2) : getQ2(d).toFixed(2), color: fillColor },
                         e: d3.event
                     });
                 })
@@ -5337,8 +5353,8 @@ nv.models.distroPlot = function() {
                     d3.select(this).classed('hover', false);
                     var fillColor = d3.select(this.parentNode).style('fill'); // color set by parent g fill
                     dispatch.elementMouseout({
-                        value: showMiddle == 'mean' ? 'Mean' : 'Median',
-                        series: { key: showMiddle == 'mean' ? getMean(d).toFixed(2) : getQ2(d).toFixed(2), color: fillColor },
+                        value: centralTendency == 'mean' ? 'Mean' : 'Median',
+                        series: { key: centralTendency == 'mean' ? getMean(d).toFixed(2) : getQ2(d).toFixed(2), color: fillColor },
                         e: d3.event
                     });
                 })
@@ -5350,43 +5366,43 @@ nv.models.distroPlot = function() {
             // setup observations
             // create DOMs even if not requested (and hide them), so that
             // we can do updates
-            var obsWrap = distroplots.selectAll(observationType == 'lines' ? '.nv-lines' : '.nv-distroplot-observation')
-                .data(function(d) { return getValsObj(d); });
+            var obsWrap = distroplots.selectAll('.nv-distroplot-observation')
+                .data(function(d) { return getValsObj(d) }, function(d,i) { return d.id; });
 
-            var scatter = obsWrap.enter()
-                .append('circle')
+            var obsGroup = obsWrap.enter()
+                .append('g')
                 .attr('class', function(d,i,j) { return 'nv-distroplot-observation ' + (isOutlier(d) && plotType == 'box' ? 'nv-distroplot-outlier' : 'nv-distroplot-non-outlier')})
-                .style({'z-index': 9000, 'opacity': 0})
 
-            var lines = obsWrap.enter()
-                .append('line')
-                .attr('class', 'nv-distroplot-observation')
+            obsGroup.append('circle')
+                .style({'opacity': 0})
+
+            obsGroup.append('line')
                 .style('stroke-width', 1)
                 .style({'stroke': d3.rgb(85, 85, 85), 'opacity': 0})
 
-            obsWrap.exit().remove();
+            //obsWrap.exit().remove(); // TODO
 
             // TODO only call when window finishes resizing, otherwise jitterX call slows things down
             // transition observations
             if (observationType == 'line') {
-                distroplots.selectAll('line.nv-distroplot-observation')
+                distroplots.selectAll('g.nv-distroplot-observation line')
                   .watchTransition(renderWatch, 'nv-distrolot-x-group: nv-distoplot-observation')
                     .attr("x1", tickLeft() + areaWidth()/4)
                     .attr("x2", tickRight() - areaWidth()/4)
                     .attr('y1', function(d) { return yScale(d.datum)})
                     .attr('y2', function(d) { return yScale(d.datum)});
             } else {
-                distroplots.selectAll('circle.nv-distroplot-observation')
+                distroplots.selectAll('g.nv-distroplot-observation circle')
                   .watchTransition(renderWatch, 'nv-distroplot: nv-distroplot-observation')
                     .attr('class', function(d) { return 'nv-distroplot-observation ' + (isOutlier(d) && plotType == 'box' ? 'nv-distroplot-outlier' : 'nv-distroplot-non-outlier')})
                     .attr('cx', function(d) { return observationType == 'swarm' ? d.x + areaWidth()/2 : observationType == 'random' ? jitterX(areaWidth(), jitter) : areaWidth()/2; })
                     .attr('cy', function(d) { return observationType == 'swarm' ? d.y : yScale(d.datum); })
-                    .attr('r', observationRadius);
+                    .attr('r', pointSize);
 
             }
 
             // set opacity on outliers/non-outliers
-            distroplots.selectAll('.nv-distroplot-observation') // don't select with class (.nv-distroplot-outlier) since it's not guaranteed to be set yet
+            distroplots.selectAll('.nv-distroplot-observation *') // don't select with class (.nv-distroplot-outlier) since it's not guaranteed to be set yet
               .watchTransition(renderWatch, 'nv-distroplot: nv-distroplot-observation')
                 .style('opacity', function(d) { 
                     if (observationType === false) {
@@ -5402,7 +5418,8 @@ nv.models.distroPlot = function() {
                 })
 
         
-            distroplots.selectAll((observationType=='line'?'circle':'line')+'.nv-distroplot-observation')
+            // hide all other observations
+            distroplots.selectAll('.nv-distroplot-observation' + (observationType=='line'?' circle':' line'))
               .watchTransition(renderWatch, 'nv-distroplot: nv-distoplot-observation')
                 .style('opacity',0)
 
@@ -5450,35 +5467,35 @@ nv.models.distroPlot = function() {
 
     chart._options = Object.create({}, {
         // simple options, just get/set the necessary values
-        width:       {get: function(){return width;}, set: function(_){width=_;}},
-        height:      {get: function(){return height;}, set: function(_){height=_;}},
-        maxBoxWidth: {get: function(){return maxBoxWidth;}, set: function(_){maxBoxWidth=_;}},
-        x:           {get: function(){return getX;}, set: function(_){getX=_;}},
-        value:       {get: function(){return getValue;}, set: function(_){getValue=_;}},
-        plotType: {get: function(){return plotType;}, set: function(_){plotType=_;}}, // plotType of background: 'box', 'violin' - default: 'box'
+        width:            {get: function(){return width;}, set: function(_){width=_;}},
+        height:           {get: function(){return height;}, set: function(_){height=_;}},
+        maxBoxWidth:      {get: function(){return maxBoxWidth;}, set: function(_){maxBoxWidth=_;}},
+        x:                {get: function(){return getX;}, set: function(_){getX=_;}},
+        y:                {get: function(){return getY;}, set: function(_){getY=_;}},
+        plotType:         {get: function(){return plotType;}, set: function(_){plotType=_;}}, // plotType of background: 'box', 'violin' - default: 'box'
         observationType:  {get: function(){return observationType;}, set: function(_){observationType=_;}}, // type of observations to show: 'random', 'swarm', 'line', 'point' - default: false (don't show observations)
-        whiskerDef:  {get: function(){return whiskerDef;}, set: function(_){whiskerDef=_;}}, // type of whisker to render: 'iqr', 'minmax', 'stddev' - default: iqr
-        notchBox:  {get: function(){return notchBox;}, set: function(_){notchBox=_;}}, // bool whether to notch box
-        hideWhiskers: {get: function(){return hideWhiskers;}, set: function(_){hideWhiskers=_;}},
-        colorGroup:  {get: function(){return colorGroup;}, set: function(_){colorGroup=_;}}, // data key to use to set color group of each x-category - default: don't group
-        showMiddle:  {get: function(){return showMiddle;}, set: function(_){showMiddle=_;}}, // add a mean or median line to the data - default: don't show, must be one of 'mean' or 'median'
-        bandwidth:  {get: function(){return bandwidth;}, set: function(_){bandwidth=_;}}, // bandwidth for kde calculation, can be float or str, if str, must be one of scott or silverman
-        resolution:  {get: function(){return resolution;}, set: function(_){resolution=_;}}, // resolution for kde calculation, default 50
-        xScale:  {get: function(){return xScale;}, set: function(_){xScale=_;}},
-        yScale:  {get: function(){return yScale;}, set: function(_){yScale=_;}},
-        showOnlyOutliers:  {get: function(){return showOnlyOutliers;}, set: function(_){showOnlyOutliers=_;}}, // show only outliers in box plot, default true
-        jitter:  {get: function(){return jitter;}, set: function(_){jitter=_;}}, // faction of that jitter should take up in 'random' observationType, must be in range [0,1]; see jitterX(), default 0.7
-        squash:  {get: function(){return squash;}, set: function(_){squash=_;}}, // whether to squash sparse distribution of color groups towards middle of x-axis position
-        observationRadius:  {get: function(){return observationRadius;}, set: function(_){observationRadius=_;}},
-        colorGroupSizeScale:  {get: function(){return colorGroupSizeScale;}, set: function(_){colorGroupSizeScale=_;}},
+        whiskerDef:       {get: function(){return whiskerDef;}, set: function(_){whiskerDef=_;}}, // type of whisker to render: 'iqr', 'minmax', 'stddev' - default: iqr
+        notchBox:         {get: function(){return notchBox;}, set: function(_){notchBox=_;}}, // bool whether to notch box
+        hideWhiskers:     {get: function(){return hideWhiskers;}, set: function(_){hideWhiskers=_;}},
+        colorGroup:       {get: function(){return colorGroup;}, set: function(_){colorGroup=_;}}, // data key to use to set color group of each x-category - default: don't group
+        centralTendency:       {get: function(){return centralTendency;}, set: function(_){centralTendency=_;}}, // add a mean or median line to the data - default: don't show, must be one of 'mean' or 'median'
+        bandwidth:        {get: function(){return bandwidth;}, set: function(_){bandwidth=_;}}, // bandwidth for kde calculation, can be float or str, if str, must be one of scott or silverman
+        resolution:       {get: function(){return resolution;}, set: function(_){resolution=_;}}, // resolution for kde calculation, default 50
+        xScale:           {get: function(){return xScale;}, set: function(_){xScale=_;}},
+        yScale:           {get: function(){return yScale;}, set: function(_){yScale=_;}},
+        showOnlyOutliers: {get: function(){return showOnlyOutliers;}, set: function(_){showOnlyOutliers=_;}}, // show only outliers in box plot, default true
+        jitter:           {get: function(){return jitter;}, set: function(_){jitter=_;}}, // faction of that jitter should take up in 'random' observationType, must be in range [0,1]; see jitterX(), default 0.7
+        squash:           {get: function(){return squash;}, set: function(_){squash=_;}}, // whether to squash sparse distribution of color groups towards middle of x-axis position
+        pointSize:     {get: function(){return pointSize;}, set: function(_){pointSize=_;}},
+        colorGroupSizeScale:   {get: function(){return colorGroupSizeScale;}, set: function(_){colorGroupSizeScale=_;}},
         colorGroupColorScale:  {get: function(){return colorGroupColorScale;}, set: function(_){colorGroupColorScale=_;}},
         xDomain: {get: function(){return xDomain;}, set: function(_){xDomain=_;}},
         yDomain: {get: function(){return yDomain;}, set: function(_){yDomain=_;}},
         xRange:  {get: function(){return xRange;}, set: function(_){xRange=_;}},
         yRange:  {get: function(){return yRange;}, set: function(_){yRange=_;}},
-        recalcData: {get: function() { reformatDat = prepData(d3.select('svg').data()[0]); } }, // TODO is there a better way to grab attached data?
+        recalcData:   {get: function() { reformatDat = prepData(d3.select('svg').data()[0]); } }, // TODO is there a better way to grab attached data?
         itemColor:    {get: function(){return getColor;}, set: function(_){getColor=_;}},
-        id:          {get: function(){return id;}, set: function(_){id=_;}},
+        id:           {get: function(){return id;}, set: function(_){id=_;}},
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){
@@ -5525,8 +5542,6 @@ nv.models.distroPlotChart = function() {
         xLabel = false,
         yLabel = false,
         tooltip = nv.models.tooltip(),
-        title = false,
-        titleOffset = {top: 0, left: 0},
         x, y,
         state = nv.utils.state(),
         defaultState = null,
@@ -5552,7 +5567,7 @@ nv.models.distroPlotChart = function() {
     //------------------------------------------------------------
 
     var renderWatch = nv.utils.renderWatch(dispatch, duration);
-    var colorGroup0, marginTop0 = margin.top, x0, value0;
+    var colorGroup0, marginTop0 = margin.top, x0, y0;
 
     var stateGetter = function(data) {
         return function(){
@@ -5581,10 +5596,6 @@ nv.models.distroPlotChart = function() {
         selection.each(function(data) {
             var container = d3.select(this), that = this;
             nv.utils.initSVG(container);
-            if (title && margin.top < (showLegend ? 40 : 25)) {
-            //    margin.top += showLegend ? 40 : 25;
-            }
-            //if (!title && margin.top > marginTop0) margin.top = marginTop0; // reset top margin after removing title from update
             var availableWidth = (width  || parseInt(container.style('width')) || 960) - margin.left - margin.right;
             var availableHeight = (height || parseInt(container.style('height')) || 400) - margin.top - margin.bottom;
 
@@ -5592,7 +5603,7 @@ nv.models.distroPlotChart = function() {
                 var opts = distroplot.options()
                 if (colorGroup0 !== opts.colorGroup() || // recalc data when any of the axis accessors are changed
                     x0 !== opts.x() ||
-                    value0 !== opts.value()
+                    y0 !== opts.y()
                 ) {
                     distroplot.recalcData();
                 }
@@ -5619,7 +5630,8 @@ nv.models.distroPlotChart = function() {
             }
 
             if (typeof d3.beeswarm !== 'function' && chart.options().observationType() == 'swarm') {
-                noData = 'You must first load beeswarm.js is using a swarm observation type (see https://github.com/Kcnarf/d3-beeswarm).'
+                var xPos = margin.left + availableWidth/2;
+                noData = 'Please include the library https://github.com/Kcnarf/d3-beeswarm to use "swarm".'
                 nv.utils.noData(chart, container);
                 return chart;
             } else if (!data || !data.length) {
@@ -5647,7 +5659,7 @@ nv.models.distroPlotChart = function() {
             gEnter.append('g').attr('class', 'nv-distroWrap');
             gEnter.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
             g.watchTransition(renderWatch, 'nv-wrap: wrap')
-                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')'); 
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
             if (rightAlignYAxis) {
                 g.select('.nv-y.nv-axis')
@@ -5684,8 +5696,6 @@ nv.models.distroPlotChart = function() {
 
                 g.select('.nv-x.nv-axis').select('.nv-axislabel')
                     .style('font-size', d3.min([availableWidth * 0.05,20]) + 'px')
-                    .watchTransition(renderWatch, 'distroPlot: g_title')
-                    .style('font-size', d3.min([availableWidth * 0.05,20]) + 'px')
 
                 var xTicks = g.select('.nv-x.nv-axis').selectAll('g');
                 if (staggerLabels) {
@@ -5705,36 +5715,12 @@ nv.models.distroPlotChart = function() {
 
                 g.select('.nv-y.nv-axis').select('.nv-axislabel')
                     .style('font-size', d3.min([availableHeight * 0.05,20]) + 'px')
-                    .watchTransition(renderWatch, 'distroPlot: g_title')
-                    .style('font-size', d3.min([availableHeight * 0.05,20]) + 'px')
             }
 
 
-            // add title DOM
-            var g_title = gEnter.append('g').attr('class','nv-title')
-                .attr('transform', function(d, i) { return 'translate(' + (availableWidth / 2) + ',' + (showLegend ? -25 : -10) + ')'; }) // center title
-
-            g_title.selectAll('text')
-                .data([title])
-                .enter()
-                .append("text")
-                .style("text-anchor", "middle")
-                .style('font-size', d3.min([availableWidth * 0.07,30]) + 'px')
-                .text(function () { return !title ? null : title; })
-                .attr('dx',titleOffset.left)
-                .attr('dy',titleOffset.top)
-
-            d3.select('.nv-title')
-                .watchTransition(renderWatch, 'distroPlot: g_title')
-                .attr('transform', function(d, i) { return 'translate(' + (availableWidth / 2) + ',' + (showLegend ? -25 : -10) + ')'; }) // center title
-                
-            d3.select('.nv-title text')
-                .watchTransition(renderWatch, 'distroPlot: g_title')
-                .text(function () { return !title ? null : title; })
-                .style('font-size', d3.min([availableWidth * 0.07,30]) + 'px')
 
             // setup legend
-            if (distroplot.colorGroup() && showLegend) { 
+            if (distroplot.colorGroup() && showLegend) {
 
                 legend.width(availableWidth)
                     .color(distroplot.itemColor())
@@ -5763,7 +5749,7 @@ nv.models.distroPlotChart = function() {
             // store original values so that we can update things properly
             colorGroup0 = distroplot.options().colorGroup();
             x0 = distroplot.options().x();
-            value0 = distroplot.options().value();
+            y0 = distroplot.options().y();
 
             //============================================================
             // Event Handling/Dispatching (in chart's scope)
@@ -5824,8 +5810,6 @@ nv.models.distroPlotChart = function() {
         showLegend:    {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
         defaultState:    {get: function(){return defaultState;}, set: function(_){defaultState=_;}},
         bottomAlignLegend:    {get: function(){return bottomAlignLegend;}, set: function(_){bottomAlignLegend=_;}},
-        title:       {get: function(){return title;}, set: function(_){title=_;}},
-        titleOffset: {get: function(){return titleOffset;}, set: function(_){titleOffset=_;}},
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){

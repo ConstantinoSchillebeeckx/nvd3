@@ -23,8 +23,6 @@ nv.models.distroPlotChart = function() {
         xLabel = false,
         yLabel = false,
         tooltip = nv.models.tooltip(),
-        title = false,
-        titleOffset = {top: 0, left: 0},
         x, y,
         state = nv.utils.state(),
         defaultState = null,
@@ -50,7 +48,7 @@ nv.models.distroPlotChart = function() {
     //------------------------------------------------------------
 
     var renderWatch = nv.utils.renderWatch(dispatch, duration);
-    var colorGroup0, marginTop0 = margin.top, x0, value0;
+    var colorGroup0, marginTop0 = margin.top, x0, y0;
 
     var stateGetter = function(data) {
         return function(){
@@ -79,10 +77,6 @@ nv.models.distroPlotChart = function() {
         selection.each(function(data) {
             var container = d3.select(this), that = this;
             nv.utils.initSVG(container);
-            if (title && margin.top < (showLegend ? 40 : 25)) {
-            //    margin.top += showLegend ? 40 : 25;
-            }
-            //if (!title && margin.top > marginTop0) margin.top = marginTop0; // reset top margin after removing title from update
             var availableWidth = (width  || parseInt(container.style('width')) || 960) - margin.left - margin.right;
             var availableHeight = (height || parseInt(container.style('height')) || 400) - margin.top - margin.bottom;
 
@@ -90,7 +84,7 @@ nv.models.distroPlotChart = function() {
                 var opts = distroplot.options()
                 if (colorGroup0 !== opts.colorGroup() || // recalc data when any of the axis accessors are changed
                     x0 !== opts.x() ||
-                    value0 !== opts.value()
+                    y0 !== opts.y()
                 ) {
                     distroplot.recalcData();
                 }
@@ -117,7 +111,8 @@ nv.models.distroPlotChart = function() {
             }
 
             if (typeof d3.beeswarm !== 'function' && chart.options().observationType() == 'swarm') {
-                noData = 'You must first load beeswarm.js is using a swarm observation type (see https://github.com/Kcnarf/d3-beeswarm).'
+                var xPos = margin.left + availableWidth/2;
+                noData = 'Please include the library https://github.com/Kcnarf/d3-beeswarm to use "swarm".'
                 nv.utils.noData(chart, container);
                 return chart;
             } else if (!data || !data.length) {
@@ -145,7 +140,7 @@ nv.models.distroPlotChart = function() {
             gEnter.append('g').attr('class', 'nv-distroWrap');
             gEnter.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
             g.watchTransition(renderWatch, 'nv-wrap: wrap')
-                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')'); 
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
             if (rightAlignYAxis) {
                 g.select('.nv-y.nv-axis')
@@ -182,8 +177,6 @@ nv.models.distroPlotChart = function() {
 
                 g.select('.nv-x.nv-axis').select('.nv-axislabel')
                     .style('font-size', d3.min([availableWidth * 0.05,20]) + 'px')
-                    .watchTransition(renderWatch, 'distroPlot: g_title')
-                    .style('font-size', d3.min([availableWidth * 0.05,20]) + 'px')
 
                 var xTicks = g.select('.nv-x.nv-axis').selectAll('g');
                 if (staggerLabels) {
@@ -203,36 +196,12 @@ nv.models.distroPlotChart = function() {
 
                 g.select('.nv-y.nv-axis').select('.nv-axislabel')
                     .style('font-size', d3.min([availableHeight * 0.05,20]) + 'px')
-                    .watchTransition(renderWatch, 'distroPlot: g_title')
-                    .style('font-size', d3.min([availableHeight * 0.05,20]) + 'px')
             }
 
 
-            // add title DOM
-            var g_title = gEnter.append('g').attr('class','nv-title')
-                .attr('transform', function(d, i) { return 'translate(' + (availableWidth / 2) + ',' + (showLegend ? -25 : -10) + ')'; }) // center title
-
-            g_title.selectAll('text')
-                .data([title])
-                .enter()
-                .append("text")
-                .style("text-anchor", "middle")
-                .style('font-size', d3.min([availableWidth * 0.07,30]) + 'px')
-                .text(function () { return !title ? null : title; })
-                .attr('dx',titleOffset.left)
-                .attr('dy',titleOffset.top)
-
-            d3.select('.nv-title')
-                .watchTransition(renderWatch, 'distroPlot: g_title')
-                .attr('transform', function(d, i) { return 'translate(' + (availableWidth / 2) + ',' + (showLegend ? -25 : -10) + ')'; }) // center title
-                
-            d3.select('.nv-title text')
-                .watchTransition(renderWatch, 'distroPlot: g_title')
-                .text(function () { return !title ? null : title; })
-                .style('font-size', d3.min([availableWidth * 0.07,30]) + 'px')
 
             // setup legend
-            if (distroplot.colorGroup() && showLegend) { 
+            if (distroplot.colorGroup() && showLegend) {
 
                 legend.width(availableWidth)
                     .color(distroplot.itemColor())
@@ -261,7 +230,7 @@ nv.models.distroPlotChart = function() {
             // store original values so that we can update things properly
             colorGroup0 = distroplot.options().colorGroup();
             x0 = distroplot.options().x();
-            value0 = distroplot.options().value();
+            y0 = distroplot.options().y();
 
             //============================================================
             // Event Handling/Dispatching (in chart's scope)
@@ -322,8 +291,6 @@ nv.models.distroPlotChart = function() {
         showLegend:    {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
         defaultState:    {get: function(){return defaultState;}, set: function(_){defaultState=_;}},
         bottomAlignLegend:    {get: function(){return bottomAlignLegend;}, set: function(_){bottomAlignLegend=_;}},
-        title:       {get: function(){return title;}, set: function(_){title=_;}},
-        titleOffset: {get: function(){return titleOffset;}, set: function(_){titleOffset=_;}},
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){
