@@ -179,8 +179,19 @@ nv.models.distroPlot = function() {
      */
     function prepData(dat) {
 
+        // add in a unique id for each data point for object constancy
+        // TODO - how do we guarantee attribute 'idx' doesn't already exist?
+        dat.forEach(function(d,i) { d.idx = i })
+
         // helper function to calcuate the various boxplot stats
-        function calcStats(v, xGroup) {
+        function calcStats(d, xGroup) {
+
+            // get a sorted array of the y values so we can calculate quartiles
+            var v = d.map(function(e) {
+                allColorGroups.add(typeof colorGroup === 'function' ? colorGroup(d) : null); // list of all colorGroups; used to set x-axis
+                return getY(e);
+            }).sort(d3.ascending);
+
             var q1 = d3.quantile(v, 0.25);
             var q3 = d3.quantile(v, 0.75);
             var iqr = q3 - q1;
@@ -196,11 +207,12 @@ nv.models.distroPlot = function() {
             var mean = d3.mean(v);
             var observations = [];
 
+
             // d3-beeswarm library must be externally loaded if being used
             // https://github.com/Kcnarf/d3-beeswarm
             if (typeof d3.beeswarm !== 'undefined') {
                 observations = d3.beeswarm()
-                    .data(v)
+                    .data(d.map(function(e) { return getY(e); })) // provide an unsorted array of y values so we can assigne the unique id
                     .radius(pointSize+1)
                     .orientation('vertical')
                     .side('symmetric')
@@ -209,6 +221,7 @@ nv.models.distroPlot = function() {
 
                 // add group info for tooltip
                 observations.map(function(e,i) { 
+                    e.idx = d[i].idx;
                     e.key = xGroup; 
                     e.isOutlier = (e.datum < wl.iqr || e.datum > wu.iqr) // add isOulier meta for proper class assignment
                     e.isOutlierStdDev = (e.datum < wl.stddev || e.datum > wu.stddev) // add isOulier meta for proper class assignment
@@ -216,7 +229,7 @@ nv.models.distroPlot = function() {
             } else {
                 v.forEach(function(e,i) {
                     observations.push({
-                        id: i,
+                        id: d[i].idx,
                         datum: e,
                         key: xGroup,
                         isOutlier: (e < wl.iqr || e > wu.iqr), // add isOulier meta for proper class assignment
@@ -274,10 +287,7 @@ nv.models.distroPlot = function() {
             formatted = d3.nest()
                 .key(function(d) { return getX(d); })
                 .rollup(function(v) {
-                    var sortDat = v.map(function(d) {
-                        return getY(d);
-                    }).sort(d3.ascending);
-                    return calcStats(sortDat);
+                    return calcStats(v);
                 })
                 .entries(dat);
         } else {
@@ -286,12 +296,7 @@ nv.models.distroPlot = function() {
                 .key(function(d) { return getX(d); })
                 .key(function(d) { return colorGroup(d); })
                 .rollup(function(v) {
-                    var xGroup = getX(v[0])
-                    var sortDat = v.map(function(d) {
-                        allColorGroups.add(colorGroup(d)); // list of all colorGroups; used to set x-axis
-                        return getY(d);
-                    }).sort(d3.ascending);
-                    return calcStats(sortDat, xGroup);
+                    return calcStats(v);
                 })
                 .entries(dat);
 
@@ -318,6 +323,7 @@ nv.models.distroPlot = function() {
             });
 
         }
+
         return formatted;
     }
 
@@ -690,12 +696,12 @@ nv.models.distroPlot = function() {
             // setup observations
             // create DOMs even if not requested (and hide them), so that
             // we can do updates
-            var obsWrap = distroplots.selectAll('.nv-distroplot-observation')
-                .data(function(d) { console.log(getValsObj(d)); return getValsObj(d) }, function(d,i) { return d.id; });
+            var obsWrap = distroplots.selectAll('g.nv-distroplot-observation')
+                .data(function(d,j) { return getValsObj(d) }, function(e,j) { return e.idx; });
 
             var obsGroup = obsWrap.enter()
                 .append('g')
-                .attr('class', function(d,i,j) { return 'nv-distroplot-observation ' + (isOutlier(d) && plotType == 'box' ? 'nv-distroplot-outlier' : 'nv-distroplot-non-outlier')})
+                .attr('class', function(d,i,j) { return 'nv-distroplot-observation moo' + i +' ' + (isOutlier(d) && plotType == 'box' ? 'nv-distroplot-outlier' : 'nv-distroplot-non-outlier')})
 
             obsGroup.append('circle')
                 .style({'opacity': 0})
@@ -704,8 +710,7 @@ nv.models.distroPlot = function() {
                 .style('stroke-width', 1)
                 .style({'stroke': d3.rgb(85, 85, 85), 'opacity': 0})
 
-            //console.log(obsWrap.exit())
-            //obsWrap.exit().remove(); // TODO
+            obsWrap.exit().remove();
 
             // TODO only call when window finishes resizing, otherwise jitterX call slows things down
             // transition observations
@@ -747,7 +752,6 @@ nv.models.distroPlot = function() {
             distroplots.selectAll('.nv-distroplot-observation' + (observationType=='line'?' circle':' line'))
               .watchTransition(renderWatch, 'nv-distroplot: nv-distoplot-observation')
                 .style('opacity',0)
-
 
             // tooltip events for observations
             distroplots.selectAll('.nv-distroplot-observation')
