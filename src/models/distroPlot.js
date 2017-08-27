@@ -613,6 +613,7 @@ nv.models.distroPlot = function() {
                             { key: 'min', value: getMin(d).toFixed(2), color: getColor(d) || color(d,j) },
                             { key: 'mean', value: getMean(d).toFixed(2), color: getColor(d) || color(d,j) },
                             { key: 'std. dev.', value: getDev(d).toFixed(2), color: getColor(d) || color(d,j) },
+                            { key: 'count', value: d.values.count, color: getColor(d) || color(d,j) },
                         ],
                         data: d,
                         index: i,
@@ -633,6 +634,7 @@ nv.models.distroPlot = function() {
                             { key: 'min', value: getMin(d).toFixed(2), color: getColor(d) || color(d,j) },
                             { key: 'mean', value: getMean(d).toFixed(2), color: getColor(d) || color(d,j) },
                             { key: 'std. dev.', value: getDev(d).toFixed(2), color: getColor(d) || color(d,j) },
+                            { key: 'count', value: d.values.count, color: getColor(d) || color(d,j) },
                         ],
                         data: d,
                         index: i,
@@ -689,7 +691,7 @@ nv.models.distroPlot = function() {
             // create DOMs even if not requested (and hide them), so that
             // we can do updates
             var obsWrap = distroplots.selectAll('.nv-distroplot-observation')
-                .data(function(d) { return getValsObj(d) }, function(d,i) { return d.id; });
+                .data(function(d) { console.log(getValsObj(d)); return getValsObj(d) }, function(d,i) { return d.id; });
 
             var obsGroup = obsWrap.enter()
                 .append('g')
@@ -702,6 +704,7 @@ nv.models.distroPlot = function() {
                 .style('stroke-width', 1)
                 .style({'stroke': d3.rgb(85, 85, 85), 'opacity': 0})
 
+            //console.log(obsWrap.exit())
             //obsWrap.exit().remove(); // TODO
 
             // TODO only call when window finishes resizing, otherwise jitterX call slows things down
