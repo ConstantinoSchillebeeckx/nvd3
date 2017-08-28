@@ -140,7 +140,7 @@ nv.models.distroPlotChart = function() {
             gEnter.append('g').attr('class', 'nv-distroWrap');
             gEnter.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
             g.watchTransition(renderWatch, 'nv-wrap: wrap')
-                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')'); 
 
             if (rightAlignYAxis) {
                 g.select('.nv-y.nv-axis')
@@ -201,22 +201,14 @@ nv.models.distroPlotChart = function() {
 
 
             // setup legend
-            // TODO disable legend for now - not sure if it makes sense for this chart type
-            // perhaps unless colors are manually specified
-            if (distroplot.colorGroup() && showLegend && false) {
+            if (distroplot.colorGroup() && showLegend) { 
 
                 legend.width(availableWidth)
                     .color(distroplot.itemColor())
-        
-                var colorGroups = distroplot.xScale().domain().map(function(d) { return {key: d}; });
 
-                // if updating a chart with a colorgroup, gEnter will not exist
-                // since it was already generated previously
-                var legendWrap = gEnter;
-                if (gEnter.empty()) {
-                    legendWrap = d3.select('.nv-distroPlot g')
-                }
-                legendWrap.append('g').attr('class', 'nv-legendWrap');
+                var colorGroups = distroplot.colorGroupSizeScale().domain().map(function(d) { return {key: d}; })
+
+                gEnter.append('g').attr('class', 'nv-legendWrap');
 
                 g.select('.nv-legendWrap')
                     .datum(colorGroups)

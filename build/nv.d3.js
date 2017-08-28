@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-24 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-08-28 */
 (function(){
 
 // set up main nv object
@@ -5659,7 +5659,7 @@ nv.models.distroPlotChart = function() {
             gEnter.append('g').attr('class', 'nv-distroWrap');
             gEnter.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
             g.watchTransition(renderWatch, 'nv-wrap: wrap')
-                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')'); 
 
             if (rightAlignYAxis) {
                 g.select('.nv-y.nv-axis')
@@ -5720,7 +5720,7 @@ nv.models.distroPlotChart = function() {
 
 
             // setup legend
-            if (distroplot.colorGroup() && showLegend) {
+            if (distroplot.colorGroup() && showLegend) { 
 
                 legend.width(availableWidth)
                     .color(distroplot.itemColor())
