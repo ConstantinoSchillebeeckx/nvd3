@@ -2,11 +2,12 @@ nv.models.distroPlot = function() {
     "use strict";
 
     // IMPROVEMENTS:
-    // legend click hide data not working
+    // legend has been disabled for the moment - does it make sense for this chart?
     // cleanup tooltip to look like candlestick example (don't need color square for everything)
-    // extend y scale range to min/max data better visually
+    // extend y scale range to fit min/max data better visually
     // tips of violins need to be cut off if very long
     // transition from box to violin not great since box only has a few points, and violin has many - need to generate box with as many points as violin
+    // disable tooltip on observations that are hidden
 
     //============================================================
     // Public Variables with Default Settings
@@ -18,7 +19,6 @@ nv.models.distroPlot = function() {
         id = Math.floor(Math.random() * 10000), // Create semi-unique ID in case user doesn't select one
         xScale = d3.scale.ordinal(),
         yScale = d3.scale.linear(),
-        colorGroupSizeScale = d3.scale.ordinal(), // help position boxes if grouping
         getX  = function(d) { return d.label }, // Default data model selectors.
         getY  = function(d) { return d.value },
         getColor = function(d) { return d.color },
@@ -49,7 +49,6 @@ nv.models.distroPlot = function() {
         resolution = 50,
         pointSize = 3,
         color = nv.utils.defaultColor(),
-        colorGroupColorScale = nv.utils.getColor(d3.scale.category10().range()), // used to color boxes if .colorGroup() specified
         container = null,
         xDomain, xRange,
         yDomain, yRange,
@@ -428,7 +427,7 @@ nv.models.distroPlot = function() {
             // setup xscale
             xScale.rangeBands(xRange || [0, availableWidth], 0.1)
                   .domain(xDomain || (colorGroup && !squash) ? allColorGroups : reformatDat.map(function(d) { return d.key }))
-
+    
             // Setup containers and skeleton of chart
             var wrap = container.selectAll('g.nv-wrap').data([reformatDat]);
             var wrapEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap');
@@ -701,7 +700,7 @@ nv.models.distroPlot = function() {
 
             var obsGroup = obsWrap.enter()
                 .append('g')
-                .attr('class', function(d,i,j) { return 'nv-distroplot-observation moo' + i +' ' + (isOutlier(d) && plotType == 'box' ? 'nv-distroplot-outlier' : 'nv-distroplot-non-outlier')})
+                .attr('class', function(d,i,j) { return 'nv-distroplot-observation ' + (isOutlier(d) && plotType == 'box' ? 'nv-distroplot-outlier' : 'nv-distroplot-non-outlier')})
 
             obsGroup.append('circle')
                 .style({'opacity': 0})
@@ -816,8 +815,6 @@ nv.models.distroPlot = function() {
         jitter:           {get: function(){return jitter;}, set: function(_){jitter=_;}}, // faction of that jitter should take up in 'random' observationType, must be in range [0,1]; see jitterX(), default 0.7
         squash:           {get: function(){return squash;}, set: function(_){squash=_;}}, // whether to squash sparse distribution of color groups towards middle of x-axis position
         pointSize:     {get: function(){return pointSize;}, set: function(_){pointSize=_;}},
-        colorGroupSizeScale:   {get: function(){return colorGroupSizeScale;}, set: function(_){colorGroupSizeScale=_;}},
-        colorGroupColorScale:  {get: function(){return colorGroupColorScale;}, set: function(_){colorGroupColorScale=_;}},
         xDomain: {get: function(){return xDomain;}, set: function(_){xDomain=_;}},
         yDomain: {get: function(){return yDomain;}, set: function(_){yDomain=_;}},
         xRange:  {get: function(){return xRange;}, set: function(_){xRange=_;}},

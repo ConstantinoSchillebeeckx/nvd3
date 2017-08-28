@@ -201,14 +201,22 @@ nv.models.distroPlotChart = function() {
 
 
             // setup legend
-            if (distroplot.colorGroup() && showLegend) {
+            // TODO disable legend for now - not sure if it makes sense for this chart type
+            // perhaps unless colors are manually specified
+            if (distroplot.colorGroup() && showLegend && false) {
 
                 legend.width(availableWidth)
                     .color(distroplot.itemColor())
+        
+                var colorGroups = distroplot.xScale().domain().map(function(d) { return {key: d}; });
 
-                var colorGroups = distroplot.colorGroupSizeScale().domain().map(function(d) { return {key: d}; })
-
-                gEnter.append('g').attr('class', 'nv-legendWrap');
+                // if updating a chart with a colorgroup, gEnter will not exist
+                // since it was already generated previously
+                var legendWrap = gEnter;
+                if (gEnter.empty()) {
+                    legendWrap = d3.select('.nv-distroPlot g')
+                }
+                legendWrap.append('g').attr('class', 'nv-legendWrap');
 
                 g.select('.nv-legendWrap')
                     .datum(colorGroups)
