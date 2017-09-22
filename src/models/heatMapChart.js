@@ -18,6 +18,7 @@ with rows/columns.
 
 
 Options for chart:
+<<<<<<< HEAD
 - row (function) [required]: accessor in data that defines rows for heatmap
 - column (function) [required]: accessor in data that defines columns for heatmap
 - color (function) [required]: accessor in data that defines colors for heatmap
@@ -45,6 +46,8 @@ Options for chart:
 - title (str): title for chart
 - titleOffset (obj): top & left pixel offset for chart - default: {top: -5, left: 0}
 - margin (obj): specified chart margins, important for adjusting enough space for legends, axis labels and title - default: {top: 20, right: 10, bottom: 50, left: 60}
+=======
+>>>>>>> heatmap
 */
 nv.models.heatMapChart = function() {
     "use strict";
@@ -53,7 +56,11 @@ nv.models.heatMapChart = function() {
     // Public Variables with Default Settings
     //------------------------------------------------------------
 
+<<<<<<< HEAD
     var heatmap = nv.models.heatMap()
+=======
+    var heatMap = nv.models.heatMap()
+>>>>>>> heatmap
         , legend = nv.models.legend()
         , legendRowMeta = nv.models.legend()
         , legendColumnMeta = nv.models.legend()
@@ -69,6 +76,7 @@ nv.models.heatMapChart = function() {
         , height = null
         , color = nv.utils.getColor()
         , showLegend = true
+<<<<<<< HEAD
         , showColumnMetaLegend = true
         , showRowMetaLegend = true
         , staggerLabels = false
@@ -81,27 +89,48 @@ nv.models.heatMapChart = function() {
         , titleOffset = {top: -5, left: 0}
         , metaXcolor = nv.utils.getColor()
         , metaYcolor = nv.utils.getColor()
+=======
+        , staggerLabels = false
+        , showXAxis = true
+        , showYAxis = true
+        , alignYAxis = 'left'
+        , alignXAxis = 'top'
+        , rotateLabels = 0
+        , title = false
+>>>>>>> heatmap
         , x
         , y
         , noData = null
         , dispatch = d3.dispatch('beforeUpdate','renderEnd')
+<<<<<<< HEAD
         //, dispatch = d3.dispatch('beforeUpdate', 'elementMouseover', 'elementMouseout', 'elementMousemove', 'renderEnd')
+=======
+>>>>>>> heatmap
         , duration = 250
         ;
 
     xAxis
+<<<<<<< HEAD
         .orient((bottomAlignXAxis) ? 'bottom' : 'top')
+=======
+        .orient(alignXAxis)
+>>>>>>> heatmap
         .showMaxMin(false)
         .tickFormat(function(d) { return d })
     ;
     yAxis
+<<<<<<< HEAD
         .orient((rightAlignYAxis) ? 'right' : 'left')
+=======
+        .orient(alignYAxis)
+>>>>>>> heatmap
         .showMaxMin(false)
         .tickFormat(function(d) { return d })
     ;
 
     tooltip
         .duration(0)
+<<<<<<< HEAD
         .headerEnabled(false)
         .valueFormatter(function(d, i) {
             return d.toFixed(2);
@@ -109,6 +138,12 @@ nv.models.heatMapChart = function() {
         .keyFormatter(function(d, i) {
             return xAxis.tickFormat()(d, i);
         });
+=======
+        .headerEnabled(true)
+        .keyFormatter(function(d, i) {
+            return xAxis.tickFormat()(d, i);
+        })
+>>>>>>> heatmap
 
 
     //============================================================
@@ -119,6 +154,7 @@ nv.models.heatMapChart = function() {
     // get max/min range for all the quantized cell values
     // returns an array where each element is [start,stop]
     // of color bin
+<<<<<<< HEAD
     function quantize_legend_values() {
 
         var e = heatmap.colorScale();
@@ -127,6 +163,16 @@ nv.models.heatMapChart = function() {
           var d = e.invertExtent(color);
           if (d[0] == null) d[0] = e.domain()[0];
           if (d[1] == null) d[1] = e.domain()[1];
+=======
+    function quantizeLegendValues() {
+
+        var e = heatMap.colorScale();
+
+        return e.range().map(function(color) {
+          var d = e.invertExtent(color);
+          if (d[0] === null) d[0] = e.domain()[0];
+          if (d[1] === null) d[1] = e.domain()[1];
+>>>>>>> heatmap
           return d;
         })
 
@@ -134,26 +180,41 @@ nv.models.heatMapChart = function() {
 
     // return true if row metadata specified by user
     function hasRowMeta() {
+<<<<<<< HEAD
         return heatmap.datRowMeta().size > 0;
     }
     // return true if col metadata specified by user
     function hasColumnMeta() {
         return heatmap.datColumnMeta().size > 0;
+=======
+        return typeof heatMap.yMeta() === 'function'
+    }
+    // return true if col metadata specified by user
+    function hasColumnMeta() {
+        return typeof heatMap.xMeta() === 'function'
+>>>>>>> heatmap
     }
 
     var renderWatch = nv.utils.renderWatch(dispatch, duration);
 
     function chart(selection) {
         renderWatch.reset();
+<<<<<<< HEAD
         renderWatch.models(heatmap);
         if (showXAxis) renderWatch.models(xAxis);
         if (showYAxis) renderWatch.models(yAxis);
+=======
+        renderWatch.models(heatMap);
+        renderWatch.models(xAxis);
+        renderWatch.models(yAxis);
+>>>>>>> heatmap
 
         selection.each(function(data) {
             var container = d3.select(this),
                 that = this;
             nv.utils.initSVG(container);
 
+<<<<<<< HEAD
             var top0 = margin.top; // store original top margin in case we start adjusting it later
 
             // check that we have enough top margin space for the title
@@ -165,6 +226,8 @@ nv.models.heatMapChart = function() {
             if (!bottomAlignXAxis && top0 < 35) margin.top += 35; // check for metadata axis space
 
 
+=======
+>>>>>>> heatmap
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin);
 
@@ -183,6 +246,7 @@ nv.models.heatMapChart = function() {
             }
 
             // Setup Scales
+<<<<<<< HEAD
             x = heatmap.xScale();
             y = heatmap.yScale();
 
@@ -201,16 +265,36 @@ nv.models.heatMapChart = function() {
             gEnter.append('g').attr('class', 'nv-x nv-axis');
             gEnter.append('g').attr('class', 'nv-y nv-axis')
             gEnter.append('g').attr('class', 'nv-title')
+=======
+            x = heatMap.xScale();
+            y = heatMap.yScale();
+
+            // Setup containers and skeleton of chart
+            var wrap = container.selectAll('g.nv-wrap').data([data]);
+            var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap').append('g');
+            var g = wrap.select('g');
+
+
+            gEnter.append('g').attr('class', 'nv-heatMap');
+            gEnter.append('g').attr('class', 'nv-legendWrap');
+            gEnter.append('g').attr('class', 'nv-x nv-axis');
+            gEnter.append('g').attr('class', 'nv-y nv-axis')
+>>>>>>> heatmap
 
             g.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
 
+<<<<<<< HEAD
             // Main Chart Component(s)
             heatmap
+=======
+            heatMap
+>>>>>>> heatmap
                 .width(availableWidth)
                 .height(availableHeight);
 
 
+<<<<<<< HEAD
 
             var heatMapWrap = g.select('.nv-heatMapWrap')
                 .datum(data.filter(function(d) { return !d.disabled }));
@@ -430,13 +514,137 @@ nv.models.heatMapChart = function() {
                     .watchTransition(renderWatch, 'heatMap: g_title')
                     .attr('transform', function(d, i) { return 'translate(' + (availableWidth / 2) + ',' + (-20 -(showLegend ? d3.select("g.nv-legend").node().getBBox().height : 0)) + ')'; }) // center title
             }
+=======
+            var heatMapWrap = g.select('.nv-heatMap')
+                .datum(data.filter(function(d) { return !d.disabled }));
+
+
+            heatMapWrap.transition().call(heatMap);
+
+
+            if (heatMap.cellAspectRatio()) {
+                availableHeight = heatMap.cellHeight() * y.domain().length;
+                heatMap.height(availableHeight);
+            }
+
+
+            // Setup Axes
+            xAxis
+                .scale(x)
+                ._ticks( nv.utils.calcTicksX(availableWidth/100, data) )
+                .tickSize(-availableHeight, 0);
+
+            var axisX = g.select('.nv-x.nv-axis')
+
+            axisX.call(xAxis)
+                .watchTransition(renderWatch, 'heatMap: axisX')
+                .selectAll('.tick')
+                .style('opacity', function() { return showXAxis ? 1 : 0 } )
+
+            var xTicks = axisX.selectAll('g');
+
+            xTicks
+                .selectAll('.tick text')
+                .attr('transform', function(d,i,j) {
+                    var rot = rotateLabels != 0 ? rotateLabels : '0';
+                    var stagger = staggerLabels ? j % 2 == 0 ? '5' : '17' : '0';
+                    return 'translate(0, ' + stagger + ') rotate(' + rot + ' 0,0)';
+                })
+                .style('text-anchor', rotateLabels > 0 ? 'start' : rotateLabels < 0 ? 'end' : 'middle');
+
+            // position text in center of meta rects
+            var yPos = -5;
+            if (hasColumnMeta()) {
+                axisX.selectAll('text').style('text-anchor', 'middle')
+                yPos = -heatMap.xMetaHeight()()/2 - heatMap.metaOffset() + 3;
+            }
+
+            // adjust position of axis based on presence of metadata group
+            if (alignXAxis == 'bottom') {
+                axisX
+                    .watchTransition(renderWatch, 'heatMap: axisX')
+                    .attr("transform", "translate(0," + (availableHeight - yPos) + ")");
+                if (heatMap.xMeta() !== false) { // if showing x metadata
+                    var pos = availableHeight+heatMap.metaOffset()+heatMap.cellBorderWidth()
+                    g.select('.xMetaWrap')
+                        .watchTransition(renderWatch, 'heatMap: xMetaWrap')
+                        .attr("transform", function(d,i) { return "translate(0," + pos + ")" })
+                }
+            } else {
+                axisX
+                    .watchTransition(renderWatch, 'heatMap: axisX')
+                    .attr("transform", "translate(0," + yPos + ")");
+            }
+
+
+            yAxis
+                .scale(y)
+                ._ticks( nv.utils.calcTicksY(availableHeight/36, data) )
+                .tickSize( -availableWidth, 0);
+
+            var axisY = g.select('.nv-y.nv-axis')
+
+            axisY.call(yAxis)
+                .watchTransition(renderWatch, 'heatMap: axisY')
+                .selectAll('.tick')
+                .style('opacity', function() { return showYAxis ? 1 : 0 } )
+
+            // position text in center of meta rects
+            var xPos = -5;
+            if (hasRowMeta()) {
+                axisY.selectAll('text').style('text-anchor', 'middle')
+                xPos = -heatMap.yMetaWidth()()/2 - heatMap.metaOffset();
+            }
+
+            // adjust position of axis based on presence of metadata group
+            if (alignYAxis == 'right') {
+                axisY.attr("transform", "translate(" + (availableWidth - xPos) + ",0)");
+                if (heatMap.yMeta() !== false) { // if showing y meatdata
+                    var pos = availableWidth+heatMap.metaOffset()+heatMap.cellBorderWidth()
+                    g.select('.yMetaWrap')
+                        .watchTransition(renderWatch, 'heatMap: yMetaWrap')
+                        .attr("transform", function(d,i) { return "translate(" + pos + ",0)" })
+                }
+            } else {
+                axisY.attr("transform", "translate(" + xPos + ",0)");
+            }
+
+
+
+            // Legend
+            var legendWrap = g.select('.nv-legendWrap')
+
+            legend
+                .width(availableWidth)
+                .color(heatMap.colorScale().range())
+
+             var legendVal = quantizeLegendValues().map(function(d) {
+                return {key: d[0].toFixed(1) + " - " + d[1].toFixed(1)};
+             })
+
+            legendWrap
+                .datum(legendVal)
+                .call(legend)
+                .attr('transform', 'translate(0,' + (alignXAxis == 'top' ? availableHeight : -30) + ')'); // TODO: more intelligent offset (-30) when top aligning legend
+
+            legendWrap
+                .watchTransition(renderWatch, 'heatMap: nv-legendWrap')
+                .style('opacity', function() { return showLegend ? 1 : 0 } )
+
+>>>>>>> heatmap
 
         });
 
         // axis don't have a flag for disabling the zero line, so we do it manually
+<<<<<<< HEAD
         d3.selectAll('.zero line')
             .style('stroke-opacity', 0)
 
+=======
+        d3.selectAll('.nv-axis').selectAll('line')
+            .style('stroke-opacity', 0)
+        d3.select('.nv-y').select('path.domain').remove()
+>>>>>>> heatmap
 
         renderWatch.renderEnd('heatMap chart immediate');
 
@@ -447,6 +655,7 @@ nv.models.heatMapChart = function() {
     // Event Handling/Dispatching (out of chart's scope)
     //------------------------------------------------------------
 
+<<<<<<< HEAD
     heatmap.dispatch.on('elementMouseover.tooltip', function(evt) {
         evt['series'] = {
             key: chart.column()(evt.data) + ' ' + chart.row()(evt.data),
@@ -461,6 +670,17 @@ nv.models.heatMapChart = function() {
     });
 
     heatmap.dispatch.on('elementMousemove.tooltip', function(evt) {
+=======
+    heatMap.dispatch.on('elementMouseover.tooltip', function(evt) {
+        tooltip.data(evt).hidden(false);
+    });
+
+    heatMap.dispatch.on('elementMouseout.tooltip', function(evt) {
+        tooltip.hidden(true);
+    });
+
+    heatMap.dispatch.on('elementMousemove.tooltip', function(evt) {
+>>>>>>> heatmap
         tooltip();
     });
 
@@ -469,10 +689,15 @@ nv.models.heatMapChart = function() {
     //------------------------------------------------------------
 
     chart.dispatch = dispatch;
+<<<<<<< HEAD
     chart.heatmap = heatmap;
     chart.legend = legend;
     chart.legendRowMeta = legendRowMeta;
     chart.legendColumnMeta = legendColumnMeta;
+=======
+    chart.heatMap = heatMap;
+    chart.legend = legend;
+>>>>>>> heatmap
     chart.xAxis = xAxis;
     chart.yAxis = yAxis;
     chart.tooltip = tooltip;
@@ -484,12 +709,20 @@ nv.models.heatMapChart = function() {
         width:      {get: function(){return width;}, set: function(_){width=_;}},
         height:     {get: function(){return height;}, set: function(_){height=_;}},
         showLegend: {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
+<<<<<<< HEAD
         showRowMetaLegend: {get: function(){return showRowMetaLegend;}, set: function(_){showRowMetaLegend=_;}},
         showColumnMetaLegend: {get: function(){return showColumnMetaLegend;}, set: function(_){showColumnMetaLegend=_;}},
         staggerLabels: {get: function(){return staggerLabels;}, set: function(_){staggerLabels=_;}},
         rotateLabels:  {get: function(){return rotateLabels;}, set: function(_){rotateLabels=_;}},
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
         title:    {get: function(){return title;}, set: function(_){title=_;}},
+=======
+        noData:     {get: function(){return noData;}, set: function(_){noData=_;}},
+        showXAxis:     {get: function(){return showXAxis;}, set: function(_){showXAxis=_;}},
+        showYAxis:     {get: function(){return showYAxis;}, set: function(_){showYAxis=_;}},
+        staggerLabels: {get: function(){return staggerLabels;}, set: function(_){staggerLabels=_;}},
+        rotateLabels:  {get: function(){return rotateLabels;}, set: function(_){rotateLabels=_;}},
+>>>>>>> heatmap
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){
@@ -504,6 +737,7 @@ nv.models.heatMapChart = function() {
         duration: {get: function(){return duration;}, set: function(_){
             duration = _;
             renderWatch.reset(duration);
+<<<<<<< HEAD
             heatmap.duration(duration);
             xAxis.duration(duration);
             yAxis.duration(duration);
@@ -524,6 +758,23 @@ nv.models.heatMapChart = function() {
     });
 
     nv.utils.inheritOptions(chart, heatmap);
+=======
+            heatMap.duration(duration);
+            xAxis.duration(duration);
+            yAxis.duration(duration);
+        }},
+        alignYAxis: {get: function(){return alignYAxis;}, set: function(_){
+            alignYAxis = _;
+            yAxis.orient(_);
+        }},
+        alignXAxis: {get: function(){return alignXAxis;}, set: function(_){
+            alignXAxis = _;
+            xAxis.orient(_);
+        }},
+    });
+
+    nv.utils.inheritOptions(chart, heatMap);
+>>>>>>> heatmap
     nv.utils.initOptions(chart);
 
     return chart;
