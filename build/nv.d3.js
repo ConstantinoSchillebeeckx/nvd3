@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-09-22 */
+/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-09-25 */
 (function(){
 
 // set up main nv object
@@ -6871,17 +6871,18 @@ nv.models.heatMap = function() {
     function prepData(data) {
 
         // reinitialize
-        uniqueX = {}, uniqueY = {}, uniqueColor = [], uniqueXMeta = [], uniqueYMeta = [];
+        uniqueX = {}, uniqueY = {}, uniqueColor = [], uniqueXMeta = [], uniqueYMeta = [], uniqueCells = [];
 
         // in order to allow for the flexibility of the user providing either
         // categorical or quantitative data, we're going to position the cells
         // through indices that we increment based on previously seen data
         // this way we can use ordinal() axes even if the data is quantitative
         var ix = 0, iy = 0; // use these indices to position cell in x & y direction
-        data.forEach(function(cell, i) {
+        var combo
+        var reformatData = data.filter(function(cell, i) {
             var valX = getX(cell),
                 valY = getY(cell),
-                valColor = getCellValue(cell);
+                valColor = getCellValue(cell);            
 
             // assemble list of unique values for each dimension
             if (!(valX in uniqueX)) { 
@@ -6891,6 +6892,7 @@ nv.models.heatMap = function() {
                  // store and ordered list of col/row metadata values
                 if (typeof xMeta === 'function') uniqueXMeta.push(xMeta(cell));
             }
+
             if (!(valY in uniqueY)) {
                 uniqueY[valY] = iy; 
                 iy++;
@@ -6899,7 +6901,7 @@ nv.models.heatMap = function() {
                 if (typeof yMeta === 'function') uniqueYMeta.push(yMeta(cell));
             }
             if (!(valColor in uniqueColor)) uniqueColor.push(valColor)
-            
+
 
             // TODO - best way to handle the case when input data already has the key 'cellPos'?
             if ('celPos' in cell) return false;
@@ -6912,6 +6914,20 @@ nv.models.heatMap = function() {
                 iy: uniqueY[valY],
             }
 
+            // keep track of row & column combinations we've already seen
+            // this prevents the same cells from being generated when
+            // the user hasn't provided proper data (one value for each
+            // row & column).
+            // if properly formatted data is not provided, only the first
+            // row & column value is used (the rest are ignored)
+            combo = String(valX) + '__' + String(valY);
+            if (uniqueCells.indexOf(combo) == -1) {
+                uniqueCells.push(combo)
+                return true
+            } else {
+                return false; // since we're using .filter() return false so we exclude this row & col combination
+            }
+
         });
 
         //uniqueX = uniqueX.sort()
@@ -6919,7 +6935,7 @@ nv.models.heatMap = function() {
         //uniqueColor = uniqueColor.sort()
 
         // normalize data is needed
-        return normalize ? normalizeData(data) : data;
+        return normalize ? normalizeData(reformatData) : reformatData;
 
     }
 
@@ -6939,7 +6955,7 @@ nv.models.heatMap = function() {
 
     var prepedData, cellHeight, cellWidth;
     var uniqueX = {}, uniqueY = {}, uniqueColor = []; // we'll store all unique values for each dimension here in format {X-val: iX}
-    var uniqueXMeta = [], uniqueYMeta = []
+    var uniqueXMeta = [], uniqueYMeta = [], uniqueCells = []
     var renderWatch = nv.utils.renderWatch(dispatch, duration);
     var RdYlBu = ["#a50026","#d73027","#f46d43","#fdae61","#fee090","#ffffbf","#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
 
