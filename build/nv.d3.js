@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.5-dev (https://github.com/novus/nvd3) 2017-09-25 */
+/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2017-09-25 */
 (function(){
 
 // set up main nv object
@@ -783,7 +783,7 @@ nv.models.tooltip = function() {
             // Create new tooltip div if it doesn't exist on DOM.
 
             var data = [1];
-            tooltip = d3.select(document.body).select('#'+id).data(data);
+            tooltip = d3.select(document.body).selectAll('#'+id).data(data);
 
             tooltip.enter().append('div')
                    .attr("class", "nvtooltip " + (classes ? classes : "xy-tooltip"))
@@ -6699,6 +6699,7 @@ nv.models.heatMap = function() {
         , xMeta
         , yMeta
         , colorRange
+        , colorDomain
         , dispatch = d3.dispatch('chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout', 'elementMousemove', 'renderEnd')
         , duration = 250
         , xMetaHeight = function(d) { return cellHeight / 3 }
@@ -6768,7 +6769,8 @@ nv.models.heatMap = function() {
     // depending on whether it should be normalized or not
     function cellColor(d) {
         var colorVal = normalize ? getNorm(d) : getCellValue(d);
-        return !isNaN(colorVal) ? colorScale(colorVal) : missingDataColor;
+        var color = colorScale(colorVal);
+        return typeof color !== 'undefined' ? color : missingDataColor;
     }
 
     // return the extent of the color data
@@ -6969,7 +6971,7 @@ nv.models.heatMap = function() {
     // a number, otherwise return missingDataLabel
     var cellValueLabel = function(d) {
         var val = !normalize ? cellValueFormat(getCellValue(d)) : cellValueFormat(getNorm(d));
-        return !isNaN(val) ? val : missingDataLabel;
+        return typeof val !== 'undefined' ? val : missingDataLabel;
     }
 
     function chart(selection) {
@@ -6997,7 +6999,7 @@ nv.models.heatMap = function() {
                   .rangeBands(xRange || [0, availableWidth-cellBorderWidth/2]);
             yScale.domain(yDomain || Object.keys(uniqueY))
                   .rangeBands(yRange || [0, availableHeight-cellBorderWidth/2]);
-            colorScale.domain(colorExtent())
+            colorScale.domain(colorDomain || colorExtent())
                   .range(colorRange || RdYlBu);
 
             // Setup containers and skeleton of chart
@@ -7324,6 +7326,7 @@ nv.models.heatMap = function() {
         xRange:  {get: function(){return xRange;}, set: function(_){xRange=_;}},
         yRange:  {get: function(){return yRange;}, set: function(_){yRange=_;}},
         colorRange:  {get: function(){return colorRange;}, set: function(_){colorRange=_;}},
+        colorDomain:  {get: function(){return colorDomain;}, set: function(_){colorDomain=_;}},
         xMeta:  {get: function(){return xMeta;}, set: function(_){xMeta=_;}},
         yMeta:  {get: function(){return yMeta;}, set: function(_){yMeta=_;}},
         xMetaColorScale:  {get: function(){return color;}, set: function(_){color = nv.utils.getColor(_);}},
@@ -7447,14 +7450,24 @@ nv.models.heatMapChart = function() {
     // of color bin
     function quantizeLegendValues() {
 
-        var e = heatMap.colorScale();
+        var e = heatMap.colorScale(), legendVals;
 
-        return e.range().map(function(color) {
-          var d = e.invertExtent(color);
-          if (d[0] === null) d[0] = e.domain()[0];
-          if (d[1] === null) d[1] = e.domain()[1];
-          return d;
-        })
+        if (typeof e.domain()[0] === 'string') { // if color scale is ordinal
+
+            legendVals = e.domain();
+
+        } else { // if color scale is numeric
+
+            legendVals = e.range().map(function(color) {
+              var d = e.invertExtent(color);
+              if (d[0] === null) d[0] = e.domain()[0];
+              if (d[1] === null) d[1] = e.domain()[1];
+              return d;
+            })
+
+        }
+
+        return legendVals
 
     }
 
@@ -7624,7 +7637,11 @@ nv.models.heatMapChart = function() {
                 .color(heatMap.colorScale().range())
 
              var legendVal = quantizeLegendValues().map(function(d) {
-                return {key: d[0].toFixed(1) + " - " + d[1].toFixed(1)};
+                if (Array.isArray(d)) { // if cell values are numeric
+                    return {key: d[0].toFixed(1) + " - " + d[1].toFixed(1)};
+                } else { // if cell values are ordinal
+                    return {key: d};
+                }
              })
 
             legendWrap
@@ -7635,7 +7652,6 @@ nv.models.heatMapChart = function() {
             legendWrap
                 .watchTransition(renderWatch, 'heatMap: nv-legendWrap')
                 .style('opacity', function() { return showLegend ? 1 : 0 } )
-
 
         });
 
@@ -9299,7 +9315,7 @@ nv.models.lineChart = function() {
                         var point = currentValues[pointIndex];
                         var pointYValue = chart.y()(point, pointIndex);
                         if (pointYValue !== null) {
-                            lines.highlightPoint(i, pointIndex, true);
+                            lines.highlightPoint(i, series.values.indexOf(point), true);
                         }
                         if (point === undefined) return;
                         if (singlePoint === undefined) singlePoint = point;
@@ -12485,6 +12501,7 @@ nv.models.multiChart = function() {
         width:      {get: function(){return width;}, set: function(_){width=_;}},
         height:     {get: function(){return height;}, set: function(_){height=_;}},
         showLegend: {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
+        xScale: {get: function(){return x;}, set: function(_){ x = _; xAxis.scale(x); }},
         yDomain1:      {get: function(){return yDomain1;}, set: function(_){yDomain1=_;}},
         yDomain2:    {get: function(){return yDomain2;}, set: function(_){yDomain2=_;}},
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
@@ -15124,10 +15141,11 @@ nv.models.scatter = function() {
                 needsUpdate = false;
 
                 if (!interactive) return false;
-
+                container.selectAll(".nv-point.hover").classed("hover", false);
                 // inject series and point index for reference into voronoi
                 if (useVoronoi === true) {
 
+                	
                     // nuke all voronoi paths on reload and recreate them
                     wrap.select('.nv-point-paths').selectAll('path').remove();
 
@@ -17913,6 +17931,6 @@ nv.models.sunburstChart = function() {
 
 };
 
-nv.version = "1.8.5-dev";
+nv.version = "1.8.6-dev";
 })();
 //# sourceMappingURL=nv.d3.js.map
