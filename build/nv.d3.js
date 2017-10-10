@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2017-10-09 */
+/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2017-10-10 */
 (function(){
 
 // set up main nv object
@@ -16021,37 +16021,39 @@ nv.models.scatterChart = function() {
             }
 
             // Setup Distribution
-            if (showDistX) {
-                distX
-                    .getData(scatter.x())
-                    .scale(x)
-                    .width(availableWidth)
-                    .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                    }).filter(function(d,i) { return !data[i].disabled }));
-                gEnter.select('.nv-distWrap').append('g')
-                    .attr('class', 'nv-distributionX');
-                g.select('.nv-distributionX')
-                    .attr('transform', 'translate(0,' + y.range()[0] + ')')
-                    .datum(data.filter(function(d) { return !d.disabled }))
-                    .call(distX);
-            }
+            distX
+                .getData(scatter.x())
+                .scale(x)
+                .width(availableWidth)
+                .color(data.map(function(d,i) {
+                    return d.color || color(d, i);
+                }).filter(function(d,i) { return !data[i].disabled }));
+            gEnter.select('.nv-distWrap').append('g')
+                .attr('class', 'nv-distributionX');
+            g.select('.nv-distributionX')
+                .attr('transform', 'translate(0,' + y.range()[0] + ')')
+                .datum(data.filter(function(d) { return !d.disabled }))
+                .call(distX)
+                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
+                .watchTransition(renderWatch, 'scatterPlusLineChart')
+                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
 
-            if (showDistY) {
-                distY
-                    .getData(scatter.y())
-                    .scale(y)
-                    .width(availableHeight)
-                    .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                    }).filter(function(d,i) { return !data[i].disabled }));
-                gEnter.select('.nv-distWrap').append('g')
-                    .attr('class', 'nv-distributionY');
-                g.select('.nv-distributionY')
-                    .attr('transform', 'translate(' + (rightAlignYAxis ? availableWidth : -distY.size() ) + ',0)')
-                    .datum(data.filter(function(d) { return !d.disabled }))
-                    .call(distY);
-            }
+            distY
+                .getData(scatter.y())
+                .scale(y)
+                .width(availableHeight)
+                .color(data.map(function(d,i) {
+                    return d.color || color(d, i);
+                }).filter(function(d,i) { return !data[i].disabled }));
+            gEnter.select('.nv-distWrap').append('g')
+                .attr('class', 'nv-distributionY');
+            g.select('.nv-distributionY')
+                .attr('transform', 'translate(' + (rightAlignYAxis ? availableWidth : -distY.size() ) + ',0)')
+                .datum(data.filter(function(d) { return !d.disabled }))
+                .call(distY)
+                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
+                .watchTransition(renderWatch, 'scatterPlusLineChart')
+                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
 
             //============================================================
             // Event Handling/Dispatching (in chart's scope)
