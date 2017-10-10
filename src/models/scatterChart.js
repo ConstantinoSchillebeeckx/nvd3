@@ -300,9 +300,9 @@ nv.models.scatterChart = function() {
                 .attr('transform', 'translate(' + (rightAlignYAxis ? availableWidth : -distY.size() ) + ',0)')
                 .datum(data.filter(function(d) { return !d.disabled }))
                 .call(distY)
-                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
+                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
                 .watchTransition(renderWatch, 'scatterPlusLineChart')
-                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
+                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
 
             //============================================================
             // Event Handling/Dispatching (in chart's scope)
