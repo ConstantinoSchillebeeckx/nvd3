@@ -79,6 +79,7 @@
         <button onclick="updatePlot({centralTendency: 'mean'});">Mean line</button>
         <button onclick="updatePlot({centralTendency: 'median'});">Median line</button>
         <button onclick="updatePlot({centralTendency: false});">Remove mean/median line</button>
+        <button onclick="updatePlot({clampViolin: true});">Clamp violins</button>
         <br>
         Observation positions
         <button onclick="updatePlot({observationType: 'random'});">Random</button>
@@ -112,6 +113,7 @@
         x: function(d) { return d.Study },
         y: function(d) { return d.Weight },
         colorGroup: false,
+        resolution: 50,
         bandwidth: 'scott',
         maxBoxWidth: null,
         xLabel: false,
@@ -123,6 +125,7 @@
         jitter: 0.7,
         hideWhiskers: false,
         notchBox: false,
+        clampViolin: false,
         showOnlyOutliers: showOnlyOutliers,
     }
 
