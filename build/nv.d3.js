@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-03 */
+/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-04 */
 (function(){
 
 // set up main nv object
@@ -4912,13 +4912,14 @@ nv.models.distroPlot = function() {
 
             // calculate bandwidth if no number is provided
             if(isNaN(parseFloat(bandwidth))) { // if not is float
+                var bandwidthCalc;
                 if (['scott','silverman'].indexOf(bandwidth) != -1) {
-                    bandwidth = calcBandwidth(v, bandwidth);
+                    bandwidthCalc = calcBandwidth(v, bandwidth);
                 } else {
-                    bandwidth = calcBandwidth(v); // calculate with default 'scott'
+                    bandwidthCalc = calcBandwidth(v); // calculate with default 'scott'
                 }
             }
-            var kde = kernelDensityEstimator(eKernel(bandwidth), yScale.ticks(resolution));
+            var kde = kernelDensityEstimator(eKernel(bandwidthCalc), yScale.ticks(resolution));
             var kdeDat = clampViolin ? clampViolinKDE(kde(v), d3.extent(v)) : kde(v);
 
 
@@ -5549,7 +5550,7 @@ nv.models.distroPlot = function() {
         yDomain: {get: function(){return yDomain;}, set: function(_){yDomain=_;}},
         xRange:  {get: function(){return xRange;}, set: function(_){xRange=_;}},
         yRange:  {get: function(){return yRange;}, set: function(_){yRange=_;}},
-        recalcData:   {get: function() { reformatDat = prepData(d3.select('svg').data()[0]); } }, // TODO is there a better way to grab attached data?
+        recalcData:   {get: function() { reformatDat = prepData(container.datum()); } },
         itemColor:    {get: function(){return getColor;}, set: function(_){getColor=_;}},
         id:           {get: function(){return id;}, set: function(_){id=_;}},
 
