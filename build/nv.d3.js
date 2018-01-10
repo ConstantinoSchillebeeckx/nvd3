@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-04 */
+/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-05 */
 (function(){
 
 // set up main nv object
@@ -5024,6 +5024,11 @@ nv.models.distroPlot = function() {
      */
     function clampViolinKDE(kde, extent) {
 
+        // this handles the case when all the x-values are equal
+        // which means no kde could be properly calculated
+        // just return the kde data so we can continue plotting successfully
+        if (extent[0] === extent[1]) return kde;
+
         var clamped = kde.reduce(function(res, d) {
             if (d.x >= extent[0] && d.x <= extent[1]) res.push(d);
             return res;
@@ -5129,8 +5134,6 @@ nv.models.distroPlot = function() {
 
 
             if (typeof reformatDat === 'undefined') reformatDat = prepData(data); // this prevents us from recalculating data all the time
-            // reformatDat = prepData(data)
-            //console.log(reformatDat)
 
             // Setup x-scale
             xScale.rangeBands(xRange || [0, availableWidth], 0.1)
@@ -5695,8 +5698,6 @@ nv.models.distroPlotChart = function() {
             if (typeof dataCache === 'undefined') {
                 dataCache = JSON.parse(JSON.stringify(data)) // deep copy
             }
-            // console.log(data[100].Weight)
-            // console.log(dataCache[100].Weight)
 
             chart.update = function() {
                 dispatch.beforeUpdate();
@@ -5781,8 +5782,8 @@ nv.models.distroPlotChart = function() {
                 g.select('.nv-x.nv-axis').attr('transform', 'translate(0,' + y.range()[0] + ')')
                 g.select('.nv-x.nv-axis').call(xAxis);
 
-                g.select('.nv-x.nv-axis').select('.nv-axislabel')
-                    .style('font-size', d3.min([availableWidth * 0.05,20]) + 'px')
+                //g.select('.nv-x.nv-axis').select('.nv-axislabel')
+                //    .style('font-size', d3.min([availableWidth * 0.05,20]) + 'px')
 
                 var xTicks = g.select('.nv-x.nv-axis').selectAll('g');
                 if (staggerLabels) {
@@ -5800,8 +5801,8 @@ nv.models.distroPlotChart = function() {
 
                 g.select('.nv-y.nv-axis').call(yAxis);
 
-                g.select('.nv-y.nv-axis').select('.nv-axislabel')
-                    .style('font-size', d3.min([availableHeight * 0.05,20]) + 'px')
+                //g.select('.nv-y.nv-axis').select('.nv-axislabel')
+                //    .style('font-size', d3.min([availableHeight * 0.05,20]) + 'px')
             }
 
 
