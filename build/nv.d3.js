@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-05 */
+/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-11 */
 (function(){
 
 // set up main nv object
@@ -9232,7 +9232,6 @@ nv.models.lineChart = function() {
         , state = nv.utils.state()
         , defaultState = null
         , noData = null
-        , getGroup = function(d) { return d.Group }
         , dispatch = d3.dispatch('stateChange', 'changeState', 'renderEnd')
         , duration = 250
         ;
@@ -9290,22 +9289,6 @@ nv.models.lineChart = function() {
             nv.utils.initSVG(container);
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin) - (focusEnable ? focus.height() : 0);
-
-            // group data if it is passed
-            // as an object
-            if (data.length && !('key' in data[0] && 'values' in data[0])) {
-                data = d3.nest()
-                    .key(getGroup)
-                    .entries(data)
-
-                // if no grouping available, rename to 'Series'
-                if (data[0].key == 'null') data[0].key = 'Series';
-
-                // bind new data format
-                d3.select(this)
-                    .datum(data)
-            }
-
             chart.update = function() {
                 if( duration === 0 ) {
                     container.call( chart );
@@ -9383,7 +9366,7 @@ nv.models.lineChart = function() {
                      g.select('.nv-legendWrap')
                          .attr('transform', 'translate(0,' + (availableHeight + xAxis.height())  +')');
                 } else if (legendPosition === 'top') {
-                    if (!marginTop && legend.height() > margin.top) {
+                    if (!marginTop && legend.height() !== margin.top) {
                         margin.top = legend.height();
                         availableHeight = nv.utils.availableHeight(height, container, margin) - (focusEnable ? focus.height() : 0);
                     }
@@ -9690,7 +9673,6 @@ nv.models.lineChart = function() {
         showYAxis:    {get: function(){return showYAxis;}, set: function(_){showYAxis=_;}},
         defaultState:    {get: function(){return defaultState;}, set: function(_){defaultState=_;}},
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
-        lineGroup: {get: function(){return getGroup;}, set: function(_){getGroup = d3.functor(_);}},
         // Focus options, mostly passed onto focus model.
         focusEnable:    {get: function(){return focusEnable;}, set: function(_){focusEnable=_;}},
         focusHeight:     {get: function(){return focus.height();}, set: function(_){focus.height(_);}},
@@ -15862,7 +15844,6 @@ nv.models.scatterChart = function() {
         , noData       = null
         , duration = 250
         , showLabels    = false
-        , getGroup     = function(d) { return d.Group } // accessor to get point group color
         ;
 
     scatter.xScale(x).yScale(y);
@@ -15915,21 +15896,6 @@ nv.models.scatterChart = function() {
 
         selection.each(function(data) {
             var that = this;
-
-            // group data if it is passed
-            // as an object
-            if (data.length && !('key' in data[0] && 'values' in data[0])) {
-                data = d3.nest()
-                    .key(getGroup)
-                    .entries(data)
-
-                // if no grouping available, rename to 'Series'
-                if (data[0].key == 'null') data[0].key = 'Series';
-
-                // bind new data format
-                d3.select(this)
-                    .datum(data)
-            }
 
             container = d3.select(this);
             nv.utils.initSVG(container);
@@ -16097,39 +16063,37 @@ nv.models.scatterChart = function() {
             }
 
             // Setup Distribution
-            distX
-                .getData(scatter.x())
-                .scale(x)
-                .width(availableWidth)
-                .color(data.map(function(d,i) {
-                    return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled }));
-            gEnter.select('.nv-distWrap').append('g')
-                .attr('class', 'nv-distributionX');
-            g.select('.nv-distributionX')
-                .attr('transform', 'translate(0,' + y.range()[0] + ')')
-                .datum(data.filter(function(d) { return !d.disabled }))
-                .call(distX)
-                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
-                .watchTransition(renderWatch, 'scatterPlusLineChart')
-                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
+            if (showDistX) {
+                distX
+                    .getData(scatter.x())
+                    .scale(x)
+                    .width(availableWidth)
+                    .color(data.map(function(d,i) {
+                        return d.color || color(d, i);
+                    }).filter(function(d,i) { return !data[i].disabled }));
+                gEnter.select('.nv-distWrap').append('g')
+                    .attr('class', 'nv-distributionX');
+                g.select('.nv-distributionX')
+                    .attr('transform', 'translate(0,' + y.range()[0] + ')')
+                    .datum(data.filter(function(d) { return !d.disabled }))
+                    .call(distX);
+            }
 
-            distY
-                .getData(scatter.y())
-                .scale(y)
-                .width(availableHeight)
-                .color(data.map(function(d,i) {
-                    return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled }));
-            gEnter.select('.nv-distWrap').append('g')
-                .attr('class', 'nv-distributionY');
-            g.select('.nv-distributionY')
-                .attr('transform', 'translate(' + (rightAlignYAxis ? availableWidth : -distY.size() ) + ',0)')
-                .datum(data.filter(function(d) { return !d.disabled }))
-                .call(distY)
-                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
-                .watchTransition(renderWatch, 'scatterPlusLineChart')
-                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
+            if (showDistY) {
+                distY
+                    .getData(scatter.y())
+                    .scale(y)
+                    .width(availableHeight)
+                    .color(data.map(function(d,i) {
+                        return d.color || color(d, i);
+                    }).filter(function(d,i) { return !data[i].disabled }));
+                gEnter.select('.nv-distWrap').append('g')
+                    .attr('class', 'nv-distributionY');
+                g.select('.nv-distributionY')
+                    .attr('transform', 'translate(' + (rightAlignYAxis ? availableWidth : -distY.size() ) + ',0)')
+                    .datum(data.filter(function(d) { return !d.disabled }))
+                    .call(distY);
+            }
 
             //============================================================
             // Event Handling/Dispatching (in chart's scope)
@@ -16209,7 +16173,6 @@ nv.models.scatterChart = function() {
         noData:     {get: function(){return noData;}, set: function(_){noData=_;}},
         duration:   {get: function(){return duration;}, set: function(_){duration=_;}},
         showLabels: {get: function(){return showLabels;}, set: function(_){showLabels=_;}},
-        pointGroup: {get: function(){return getGroup;}, set: function(_){getGroup = d3.functor(_);}},
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){
