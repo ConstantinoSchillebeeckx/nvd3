@@ -35,7 +35,6 @@ nv.models.scatterChart = function() {
         , noData       = null
         , duration = 250
         , showLabels    = false
-        , getGroup     = function(d) { return d.Group } // accessor to get point group color
         ;
 
     scatter.xScale(x).yScale(y);
@@ -88,21 +87,6 @@ nv.models.scatterChart = function() {
 
         selection.each(function(data) {
             var that = this;
-
-            // group data if it is passed
-            // as an object
-            if (data.length && !('key' in data[0] && 'values' in data[0])) {
-                data = d3.nest()
-                    .key(getGroup)
-                    .entries(data)
-
-                // if no grouping available, rename to 'Series'
-                if (data[0].key == 'null') data[0].key = 'Series';
-
-                // bind new data format
-                d3.select(this)
-                    .datum(data)
-            }
 
             container = d3.select(this);
             nv.utils.initSVG(container);
@@ -270,39 +254,37 @@ nv.models.scatterChart = function() {
             }
 
             // Setup Distribution
-            distX
-                .getData(scatter.x())
-                .scale(x)
-                .width(availableWidth)
-                .color(data.map(function(d,i) {
-                    return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled }));
-            gEnter.select('.nv-distWrap').append('g')
-                .attr('class', 'nv-distributionX');
-            g.select('.nv-distributionX')
-                .attr('transform', 'translate(0,' + y.range()[0] + ')')
-                .datum(data.filter(function(d) { return !d.disabled }))
-                .call(distX)
-                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
-                .watchTransition(renderWatch, 'scatterPlusLineChart')
-                .style('opacity', function() { return showDistX ? '1' : '1e-6'; })
+            if (showDistX) {
+                distX
+                    .getData(scatter.x())
+                    .scale(x)
+                    .width(availableWidth)
+                    .color(data.map(function(d,i) {
+                        return d.color || color(d, i);
+                    }).filter(function(d,i) { return !data[i].disabled }));
+                gEnter.select('.nv-distWrap').append('g')
+                    .attr('class', 'nv-distributionX');
+                g.select('.nv-distributionX')
+                    .attr('transform', 'translate(0,' + y.range()[0] + ')')
+                    .datum(data.filter(function(d) { return !d.disabled }))
+                    .call(distX);
+            }
 
-            distY
-                .getData(scatter.y())
-                .scale(y)
-                .width(availableHeight)
-                .color(data.map(function(d,i) {
-                    return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled }));
-            gEnter.select('.nv-distWrap').append('g')
-                .attr('class', 'nv-distributionY');
-            g.select('.nv-distributionY')
-                .attr('transform', 'translate(' + (rightAlignYAxis ? availableWidth : -distY.size() ) + ',0)')
-                .datum(data.filter(function(d) { return !d.disabled }))
-                .call(distY)
-                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
-                .watchTransition(renderWatch, 'scatterPlusLineChart')
-                .style('opacity', function() { return showDistY ? '1' : '1e-6'; })
+            if (showDistY) {
+                distY
+                    .getData(scatter.y())
+                    .scale(y)
+                    .width(availableHeight)
+                    .color(data.map(function(d,i) {
+                        return d.color || color(d, i);
+                    }).filter(function(d,i) { return !data[i].disabled }));
+                gEnter.select('.nv-distWrap').append('g')
+                    .attr('class', 'nv-distributionY');
+                g.select('.nv-distributionY')
+                    .attr('transform', 'translate(' + (rightAlignYAxis ? availableWidth : -distY.size() ) + ',0)')
+                    .datum(data.filter(function(d) { return !d.disabled }))
+                    .call(distY);
+            }
 
             //============================================================
             // Event Handling/Dispatching (in chart's scope)
@@ -382,7 +364,6 @@ nv.models.scatterChart = function() {
         noData:     {get: function(){return noData;}, set: function(_){noData=_;}},
         duration:   {get: function(){return duration;}, set: function(_){duration=_;}},
         showLabels: {get: function(){return showLabels;}, set: function(_){showLabels=_;}},
-        pointGroup: {get: function(){return getGroup;}, set: function(_){getGroup = d3.functor(_);}},
 
         // options that require extra logic in the setter
         margin: {get: function(){return margin;}, set: function(_){
