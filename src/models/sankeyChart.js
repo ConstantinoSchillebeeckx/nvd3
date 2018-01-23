@@ -41,6 +41,9 @@ nv.models.sankeyChart = function() {
     var nodeTitle = function(d){
         return d.name + '\n' + format(d.value);
     };
+    var nodeLabel = function(d) {
+        return d.name;
+    }
 
     var showError = function(element, message) {
         element.append('text')
@@ -112,20 +115,24 @@ nv.models.sankeyChart = function() {
             }
 
             // No errors, continue
+            var availableWidth = nv.utils.availableWidth(width, selection, margin),
+                availableHeight = nv.utils.availableHeight(height, selection, margin);
+
 
             // append the svg canvas to the page
             var svg = selection.append('svg')
-                .attr('width', width)
-                .attr('height', height)
+                .attr('width', availableWidth)
+                .attr('height', availableHeight)
                 .append('g')
-                .attr('class', 'nvd3 nv-wrap nv-sankeyChart');
+                .attr('class', 'nvd3 nv-wrap nv-sankeyChart')
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
             // Set the sankey diagram properties
             sankey
                 .nodeWidth(nodeWidth)
                 .nodePadding(nodePadding)
                 .nodeId(id)
-                .size([width, height]);
+                .size([availableWidth, availableHeight]);
 
             var path = sankey.link();
 
@@ -152,7 +159,7 @@ nv.models.sankeyChart = function() {
             var node = svg.append('g').selectAll('.node')
                 .data(data.nodes)
                 .enter().append('g')
-                .attr('class', 'node')
+                .attr('class', function(d) { return 'node ' + id(d).replace(/ /g,'_'); })
                 .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
                 .call(
                     d3.behavior
@@ -180,7 +187,7 @@ nv.models.sankeyChart = function() {
                 .attr('dy', '.35em')
                 .attr('text-anchor', 'end')
                 .attr('transform', null)
-                .text(function(d) { return d.name; })
+                .text(nodeLabel)
                 .filter(function(d) { return d.x < width / 2; })
                 .attr('x', 6 + sankey.nodeWidth())
                 .attr('text-anchor', 'start');
@@ -189,7 +196,7 @@ nv.models.sankeyChart = function() {
             function dragmove(d) {
                 d3.select(this).attr('transform',
                 'translate(' + d.x + ',' + (
-                    d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))
+                    d.y = Math.max(0, Math.min(availableHeight - d.dy, d3.event.y))
                 ) + ')');
                 sankey.relayout();
                 link.attr('d', path);
@@ -228,6 +235,7 @@ nv.models.sankeyChart = function() {
             nodeFillColor   = _.fillColor   !== undefined ? _.fillColor   : nodeFillColor;
             nodeStrokeColor = _.strokeColor !== undefined ? _.strokeColor : nodeStrokeColor;
             nodeTitle       = _.title       !== undefined ? _.title       : nodeTitle;
+            nodeLabel       = _.label       !== undefined ? _.label       : nodeLabel;
         }}
 
     });
