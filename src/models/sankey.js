@@ -15,6 +15,7 @@ nv.models.sankey = function() {
         size = [1, 1],
         nodes = [],
         links = [],
+        id = function(d) { return d.id },
         sinksRight = true;
 
     var layout = function(iterations) {
@@ -66,20 +67,28 @@ nv.models.sankey = function() {
     // Private Variables
     //------------------------------------------------------------
 
+    function find(nodeById, id) {
+      var node = nodeById.get(id);
+      if (!node) throw new Error("missing: " + id);
+      return node;
+    }
+
     // Populate the sourceLinks and targetLinks for each node.
     // Also, if the source and target are not objects, assume they are indices.
     function computeNodeLinks() {
-        nodes.forEach(function(node) {
+        nodes.forEach(function(node, i) {
+            node.index = i;
             // Links that have this node as source.
             node.sourceLinks = [];
             // Links that have this node as target.
             node.targetLinks = [];
         });
+        var nodeById = d3.map(nodes, id);
         links.forEach(function(link) {
             var source = link.source,
                 target = link.target;
-            if (typeof source === 'number') source = link.source = nodes[link.source];
-            if (typeof target === 'number') target = link.target = nodes[link.target];
+            if (typeof source !== 'object') source = link.source = find(nodeById, source);
+            if (typeof target !== 'object') target = link.target = find(nodeById, target);
             source.sourceLinks.push(link);
             target.targetLinks.push(link);
         });
@@ -302,6 +311,7 @@ nv.models.sankey = function() {
         nodeWidth:    {get: function(){return nodeWidth;},   set: function(_){nodeWidth=+_;}},
         nodePadding:  {get: function(){return nodePadding;}, set: function(_){nodePadding=_;}},
         nodes:        {get: function(){return nodes;},       set: function(_){nodes=_;}},
+        nodeId:        {get: function(){return id;},       set: function(_){id=_;}},
         links:        {get: function(){return links ;},      set: function(_){links=_;}},
         size:         {get: function(){return size;},        set: function(_){size=_;}},
         sinksRight:   {get: function(){return sinksRight;},  set: function(_){sinksRight=_;}},
