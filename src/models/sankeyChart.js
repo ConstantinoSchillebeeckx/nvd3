@@ -16,6 +16,7 @@ nv.models.sankeyChart = function() {
         , nodeWidth = 36
         , nodePadding =  40
         , units = 'units'
+        , id = function(d) { return d.id }
         , center = undefined
         ;
 
@@ -123,6 +124,7 @@ nv.models.sankeyChart = function() {
             sankey
                 .nodeWidth(nodeWidth)
                 .nodePadding(nodePadding)
+                .nodeId(id)
                 .size([width, height]);
 
             var path = sankey.link();
@@ -205,6 +207,7 @@ nv.models.sankeyChart = function() {
 
     chart._options = Object.create({}, {
         // simple options, just get/set the necessary values
+        nodeId:        {get: function(){return id;},       set: function(_){id=_;}},
         units:           {get: function(){return units;},       set: function(_){units=_;}},
         width:           {get: function(){return width;},       set: function(_){width=_;}},
         height:          {get: function(){return height;},      set: function(_){height=_;}},
