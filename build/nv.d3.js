@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-11 */
+/* nvd3 version 1.8.6-dev (https://github.com/novus/nvd3) 2018-01-23 */
 (function(){
 
 // set up main nv object
@@ -6997,6 +6997,7 @@ nv.models.heatMap = function() {
         uniqueXMeta = [], // [cell x metadata value]
         uniqueYMeta = [], // [cell y metadata value]
         uniqueCells = []; // [cell x,y values stored as array]
+        var warnings = [];
         var sortedCells = {}; // {cell x values: {cell y value: cell data, ... }, ... }
 
         var ix = 0, iy = 0; // use these indices to position cell in x & y direction
@@ -7047,9 +7048,13 @@ nv.models.heatMap = function() {
             if (!isArrayInArray(uniqueCells, combo)) {
                 uniqueCells.push(combo)
                 sortedCells[valX][valY] = cell;
+            } else if (warnings.indexOf(valX + valY) == -1) {
+                warnings.push(valX + valY);
+                console.warn("The row/column position " + valX + "/" + valY + " has multiple values; ensure each cell has only a single value.");
             }
 
         });
+        console.log(warnings)
 
         uniqueColor = uniqueColor.sort()
 
@@ -14542,6 +14547,7 @@ nv.models.sankey = function() {
         size = [1, 1],
         nodes = [],
         links = [],
+        id = function(d) { return d.id },
         sinksRight = true;
 
     var layout = function(iterations) {
@@ -14593,20 +14599,28 @@ nv.models.sankey = function() {
     // Private Variables
     //------------------------------------------------------------
 
+    function find(nodeById, id) {
+      var node = nodeById.get(id);
+      if (!node) throw new Error("missing: " + id);
+      return node;
+    }
+
     // Populate the sourceLinks and targetLinks for each node.
     // Also, if the source and target are not objects, assume they are indices.
     function computeNodeLinks() {
-        nodes.forEach(function(node) {
+        nodes.forEach(function(node, i) {
+            node.index = i;
             // Links that have this node as source.
             node.sourceLinks = [];
             // Links that have this node as target.
             node.targetLinks = [];
         });
+        var nodeById = d3.map(nodes, id);
         links.forEach(function(link) {
             var source = link.source,
                 target = link.target;
-            if (typeof source === 'number') source = link.source = nodes[link.source];
-            if (typeof target === 'number') target = link.target = nodes[link.target];
+            if (typeof source !== 'object') source = link.source = find(nodeById, source);
+            if (typeof target !== 'object') target = link.target = find(nodeById, target);
             source.sourceLinks.push(link);
             target.targetLinks.push(link);
         });
@@ -14829,6 +14843,7 @@ nv.models.sankey = function() {
         nodeWidth:    {get: function(){return nodeWidth;},   set: function(_){nodeWidth=+_;}},
         nodePadding:  {get: function(){return nodePadding;}, set: function(_){nodePadding=_;}},
         nodes:        {get: function(){return nodes;},       set: function(_){nodes=_;}},
+        nodeId:        {get: function(){return id;},       set: function(_){id=_;}},
         links:        {get: function(){return links ;},      set: function(_){links=_;}},
         size:         {get: function(){return size;},        set: function(_){size=_;}},
         sinksRight:   {get: function(){return sinksRight;},  set: function(_){sinksRight=_;}},
@@ -14870,6 +14885,7 @@ nv.models.sankeyChart = function() {
         , nodeWidth = 36
         , nodePadding =  40
         , units = 'units'
+        , id = function(d) { return d.id }
         , center = undefined
         ;
 
@@ -14894,6 +14910,9 @@ nv.models.sankeyChart = function() {
     var nodeTitle = function(d){
         return d.name + '\n' + format(d.value);
     };
+    var nodeLabel = function(d) {
+        return d.name;
+    }
 
     var showError = function(element, message) {
         element.append('text')
@@ -14965,19 +14984,24 @@ nv.models.sankeyChart = function() {
             }
 
             // No errors, continue
+            var availableWidth = nv.utils.availableWidth(width, selection, margin),
+                availableHeight = nv.utils.availableHeight(height, selection, margin);
+
 
             // append the svg canvas to the page
             var svg = selection.append('svg')
-                .attr('width', width)
-                .attr('height', height)
+                .attr('width', availableWidth)
+                .attr('height', availableHeight)
                 .append('g')
-                .attr('class', 'nvd3 nv-wrap nv-sankeyChart');
+                .attr('class', 'nvd3 nv-wrap nv-sankeyChart')
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
             // Set the sankey diagram properties
             sankey
                 .nodeWidth(nodeWidth)
                 .nodePadding(nodePadding)
-                .size([width, height]);
+                .nodeId(id)
+                .size([availableWidth, availableHeight]);
 
             var path = sankey.link();
 
@@ -15004,7 +15028,7 @@ nv.models.sankeyChart = function() {
             var node = svg.append('g').selectAll('.node')
                 .data(data.nodes)
                 .enter().append('g')
-                .attr('class', 'node')
+                .attr('class', function(d) { return 'node ' + id(d).replace(/ /g,'_'); })
                 .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
                 .call(
                     d3.behavior
@@ -15032,7 +15056,7 @@ nv.models.sankeyChart = function() {
                 .attr('dy', '.35em')
                 .attr('text-anchor', 'end')
                 .attr('transform', null)
-                .text(function(d) { return d.name; })
+                .text(nodeLabel)
                 .filter(function(d) { return d.x < width / 2; })
                 .attr('x', 6 + sankey.nodeWidth())
                 .attr('text-anchor', 'start');
@@ -15041,7 +15065,7 @@ nv.models.sankeyChart = function() {
             function dragmove(d) {
                 d3.select(this).attr('transform',
                 'translate(' + d.x + ',' + (
-                    d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))
+                    d.y = Math.max(0, Math.min(availableHeight - d.dy, d3.event.y))
                 ) + ')');
                 sankey.relayout();
                 link.attr('d', path);
@@ -15059,6 +15083,7 @@ nv.models.sankeyChart = function() {
 
     chart._options = Object.create({}, {
         // simple options, just get/set the necessary values
+        nodeId:        {get: function(){return id;},       set: function(_){id=_;}},
         units:           {get: function(){return units;},       set: function(_){units=_;}},
         width:           {get: function(){return width;},       set: function(_){width=_;}},
         height:          {get: function(){return height;},      set: function(_){height=_;}},
@@ -15079,6 +15104,7 @@ nv.models.sankeyChart = function() {
             nodeFillColor   = _.fillColor   !== undefined ? _.fillColor   : nodeFillColor;
             nodeStrokeColor = _.strokeColor !== undefined ? _.strokeColor : nodeStrokeColor;
             nodeTitle       = _.title       !== undefined ? _.title       : nodeTitle;
+            nodeLabel       = _.label       !== undefined ? _.label       : nodeLabel;
         }}
 
     });
